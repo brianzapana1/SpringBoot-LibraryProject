@@ -1,0 +1,11 @@
+spring:
+  application:
+    name: ms-loan
+
+server:
+  port: 8083
+
+logging:
+  level:
+    root: INFO
+    '[com.biblioteca]': DEBUG
