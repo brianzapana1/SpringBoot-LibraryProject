@@ -1,0 +1,82 @@
+springdoc:
+  swagger-ui:
+    path: /openapi/swagger-ui.html
+  api-docs:
+    path: /openapi/v3/api-docs
+  packagesToScan: bo.edu.ucb.microservices.core.auth.ms_auth.controller
+  pathsToMatch: /**
+
+api:
+  common:
+    version: 1.0.0
+    title: API Autenticación
+    description: Servicio de autenticación de usuarios (inicio de sesión)
+    termsOfService: https://www.miempresa.com/terminos
+    license: Licencia MIT
+    licenseUrl: https://opensource.org/licenses/MIT
+    externalDocDesc: Documentación en Wiki
+    externalDocUrl: https://www.miempresa.com/wiki
+    contact:
+      name: Soporte Mi Empresa
+      url: https://www.miempresa.com/contacto
+      email: soporte@miempresa.com
+
+  responseCodes:
+    ok:
+      description: OK
+    badRequest:
+      description: Bad Request, Formato inválido de la solicitud. Ver mensaje de respuesta para más información.
+    unauthorized:
+      description: Unauthorized, credenciales incorrectas o no proporcionadas.
+    notFound:
+      description: Not Found, el usuario especificado no existe.
+    unprocessableEntity:
+      description: Unprocessable entity, no se puede procesar los parámetros de entrada. Ver mensaje de respuesta para más información.
+
+  auth:
+    login:
+      description: Permite a un usuario iniciar sesión en el sistema enviando sus credenciales.
+      notes: |
+        # Respuesta exitosa
+        Si las credenciales son válidas, el método retornará los datos básicos del usuario autenticado.
+
+        # Respuestas con error
+        1. Si el **username** o **password** no son válidos, se devuelve un error **400 - Bad Request**
+        2. Si las credenciales son incorrectas, se devuelve un error **401 - Unauthorized**
+      parameters:
+        username: Nombre de usuario o correo electrónico utilizado para iniciar sesión.
+        password: Contraseña asociada al usuario.
+
+    get-user:
+      description: Obtiene un usuario en base a su **username**.
+      notes: |
+        # Respuesta exitosa
+        Devuelve la información básica de un usuario identificado por su username.
+
+        # Respuestas con error
+        1. Si no se encuentra el usuario, se devuelve un error **404 - Not Found**
+      parameters:
+        username: Nombre de usuario a consultar.
+
+    update-user:
+      description: Permite actualizar los datos de un usuario existente.
+      notes: |
+        # Respuesta exitosa
+        Devuelve el usuario actualizado.
+
+        # Respuestas con error
+        1. Si los datos enviados no son válidos, se devuelve un error **400 - Bad Request**
+      parameters:
+        username: Nombre de usuario que se desea actualizar.
+        password: Nueva contraseña a asignar al usuario.
+
+    delete-user:
+      description: Permite eliminar un usuario existente del sistema.
+      notes: |
+        # Respuesta exitosa
+        Si el usuario existe, devuelve un mensaje de confirmación.
+
+        # Respuestas con error
+        1. Si no se encuentra el usuario, se devuelve un error **404 - Not Found**
+      parameters:
+        username: Nombre de usuario que se desea eliminar.

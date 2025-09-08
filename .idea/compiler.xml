@@ -9,7 +9,9 @@
         <module name="ms-notification" />
         <module name="dto-notification" />
         <module name="microservices-util" />
+        <module name="ms-auth" />
         <module name="util" />
+        <module name="dto-auth" />
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>
@@ -18,7 +20,9 @@
   </component>
   <component name="JavacSettings">
     <option name="ADDITIONAL_OPTIONS_OVERRIDE">
+      <module name="dto-auth" options="-parameters" />
       <module name="dto-notification" options="-parameters" />
+      <module name="ms-auth" options="-parameters" />
       <module name="ms-notification" options="-parameters" />
       <module name="util" options="" />
     </option>

@@ -1,0 +1,3 @@
+bo\edu\ucb\microservices\core\auth\ms_auth\AuthServiceApplication.class
+bo\edu\ucb\microservices\core\auth\ms_auth\controller\AuthServiceController.class
+bo\edu\ucb\microservices\core\auth\ms_auth\config\OpenApiConfig.class
