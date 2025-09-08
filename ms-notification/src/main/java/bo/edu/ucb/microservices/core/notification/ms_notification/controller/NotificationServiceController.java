@@ -3,10 +3,8 @@ package bo.edu.ucb.microservices.core.notification.ms_notification.controller;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
 import bo.edu.ucb.microservices.dto.notification.NotificationDto;
 import bo.edu.ucb.microservices.util.exceptions.InvalidInputException;
@@ -35,10 +33,9 @@ public class NotificationServiceController {
         this.serviceUtil = serviceUtil;
     }
 
-    @Operation(
-            summary = "Obtiene una notificación por su ID",
-            description = "Retorna los datos de una notificación específica según su ID."
-    )
+    // ------------------ GET ------------------
+    @Operation(summary = "Obtiene una notificación por su ID",
+            description = "Retorna los datos de una notificación específica según su ID.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Notificación encontrada correctamente",
                     content = @Content(schema = @Schema(implementation = NotificationDto.class))),
@@ -48,7 +45,7 @@ public class NotificationServiceController {
                     content = @Content(schema = @Schema(implementation = HttpErrorInfo.class)))
     })
     @GetMapping(value = "/{notificationId}", produces = "application/json")
-    public NotificationDto getNotification(
+    public ResponseEntity<NotificationDto> getNotification(
             @Parameter(description = "ID de la notificación a obtener", required = true)
             @PathVariable("notificationId") int notificationId
     ) {
@@ -62,10 +59,50 @@ public class NotificationServiceController {
             throw new NotFoundException("No se encontró notificación con id: " + notificationId);
         }
 
-        return new NotificationDto(
+        NotificationDto dto = new NotificationDto(
                 notificationId,
-                "name-" + notificationId,
-                serviceUtil.getServiceAddress()
+                "Título de prueba " + notificationId,
+                "Este es un mensaje de prueba para la notificación con id " + notificationId
         );
+
+        return ResponseEntity.ok(dto);
+    }
+
+    // ------------------ POST ------------------
+    @Operation(summary = "Crea una nueva notificación",
+            description = "Crea una nueva notificación en el sistema.")
+    @PostMapping(consumes = "application/json", produces = "application/json")
+    public ResponseEntity<NotificationDto> createNotification(@RequestBody NotificationDto dto) {
+        LOGGER.info("Creando notificación: {}", dto);
+
+        // Simula la creación asignando un ID
+        dto.setNotificationId((int) (Math.random() * 1000));
+        return ResponseEntity.ok(dto);
+    }
+
+    // ------------------ PUT ------------------
+    @Operation(summary = "Actualiza una notificación existente",
+            description = "Actualiza los datos de una notificación específica según su ID.")
+    @PutMapping(value = "/{notificationId}", consumes = "application/json", produces = "application/json")
+    public ResponseEntity<NotificationDto> updateNotification(
+            @PathVariable("notificationId") int notificationId,
+            @RequestBody NotificationDto dto
+    ) {
+        LOGGER.info("Actualizando notificación con id: {}", notificationId);
+
+        dto.setNotificationId(notificationId);
+        return ResponseEntity.ok(dto);
+    }
+
+    // ------------------ DELETE ------------------
+    @Operation(summary = "Elimina una notificación",
+            description = "Elimina una notificación específica según su ID.")
+    @DeleteMapping(value = "/{notificationId}", produces = "application/json")
+    public ResponseEntity<String> deleteNotification(@PathVariable("notificationId") int notificationId) {
+        LOGGER.info("Eliminando notificación con id: {}", notificationId);
+
+        // Simulación de eliminación exitosa
+        String message = "Notificación con id " + notificationId + " eliminada correctamente.";
+        return ResponseEntity.ok(message);
     }
 }
