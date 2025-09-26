@@ -8,6 +8,7 @@ class MsBookApplicationTests {
 
 	@Test
 	void contextLoads() {
+		// Test que verifica que el contexto de Spring Boot se carga correctamente
 	}
 
 }

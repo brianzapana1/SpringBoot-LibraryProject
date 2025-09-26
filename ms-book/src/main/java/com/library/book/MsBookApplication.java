@@ -5,7 +5,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.ComponentScan;
 
 @SpringBootApplication
-@ComponentScan({"com.library.book","http"})
+@ComponentScan({"com.library.book", "com.library.util"})
 public class MsBookApplication {
 
 	public static void main(String[] args) {
