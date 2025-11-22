@@ -1,7 +1,7 @@
 package com.library.book.controller;
 
-import com.library.BookDto;
-import com.library.util.http.ServiceUtil;
+import bo.edu.ucb.microservices.dto.book.BookDto;
+import bo.edu.ucb.microservices.util.http.ServiceUtil;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

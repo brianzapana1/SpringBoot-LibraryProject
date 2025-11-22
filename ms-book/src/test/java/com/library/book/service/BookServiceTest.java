@@ -1,6 +1,6 @@
 package com.library.book.service;
 
-import com.library.BookDto;
+import bo.edu.ucb.microservices.dto.book.BookDto;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

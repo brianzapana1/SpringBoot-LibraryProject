@@ -1,2 +1,3 @@
 com\library\book\controller\BookController.class
+com\library\book\exception\GlobalExceptionHandler.class
 com\library\book\MsBookApplication.class

@@ -1,5 +1,10 @@
 com\library\util\http\HttpErrorInfo.class
+bo\edu\ucb\microservices\util\exceptions\NotFoundException.class
 com\library\util\exceptions\NotFoundException.class
+bo\edu\ucb\microservices\util\http\HttpErrorInfo.class
+bo\edu\ucb\microservices\util\exceptions\InvalidInputException.class
+bo\edu\ucb\microservices\util\http\GlobalControllerExceptionHandler.class
+bo\edu\ucb\microservices\util\http\ServiceUtil.class
 com\library\util\http\GlobalControllerExceptionHandler.class
 com\library\util\exceptions\InvalidInputException.class
 com\library\util\http\ServiceUtil.class

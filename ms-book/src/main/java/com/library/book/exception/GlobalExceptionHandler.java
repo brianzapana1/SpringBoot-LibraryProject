@@ -1,7 +1,7 @@
 package com.library.book.exception;
 
-import com.library.util.exceptions.InvalidInputException;
-import com.library.util.exceptions.NotFoundException;
+import bo.edu.ucb.microservices.util.exceptions.InvalidInputException;
+import bo.edu.ucb.microservices.util.exceptions.NotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;

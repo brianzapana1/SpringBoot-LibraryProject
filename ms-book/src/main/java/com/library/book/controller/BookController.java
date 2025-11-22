@@ -20,10 +20,10 @@ import org.springframework.validation.annotation.Validated;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 
-import com.library.BookDto;
-import com.library.util.exceptions.InvalidInputException;
-import com.library.util.exceptions.NotFoundException;
-import com.library.util.http.ServiceUtil;
+import bo.edu.ucb.microservices.dto.book.BookDto;
+import bo.edu.ucb.microservices.util.exceptions.InvalidInputException;
+import bo.edu.ucb.microservices.util.exceptions.NotFoundException;
+import bo.edu.ucb.microservices.util.http.ServiceUtil;
 
 import java.util.List;
 import java.util.ArrayList;
