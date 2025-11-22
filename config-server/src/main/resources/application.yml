@@ -1,0 +1,33 @@
+server:
+  port: 8888
+
+spring:
+  application:
+    name: config-server
+  cloud:
+    config:
+      server:
+        git:
+          uri: https://github.com/Fesur/config-repo.git
+          default-label: master
+          clone-on-start: true
+          timeout: 10
+          try-master-branch: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+
+app:
+  eureka-server: discovery-server
+
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: http://${app.eureka-server}:8761/eureka/
+    register-with-eureka: true
+    fetch-registry: true
+  instance:
+    prefer-ip-address: true
