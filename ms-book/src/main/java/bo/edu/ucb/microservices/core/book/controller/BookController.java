@@ -1,4 +1,4 @@
-package com.library.book.controller;
+package bo.edu.ucb.microservices.core.book.controller;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

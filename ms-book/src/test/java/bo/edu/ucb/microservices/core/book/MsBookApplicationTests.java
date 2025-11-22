@@ -1,4 +1,4 @@
-package com.library.book;
+package bo.edu.ucb.microservices.core.book;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;

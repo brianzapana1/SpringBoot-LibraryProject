@@ -1,11 +1,11 @@
-package com.library.book;
+package bo.edu.ucb.microservices.core.book;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.ComponentScan;
 
 @SpringBootApplication
-@ComponentScan({"com.library.book", "com.library.util"})
+@ComponentScan({"bo.edu.ucb.microservices.core.book", "bo.edu.ucb.microservices.util"})
 public class MsBookApplication {
 
 	public static void main(String[] args) {

@@ -8,7 +8,7 @@
 		<version>3.3.4</version>
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
-	<groupId>com.library</groupId>
+	<groupId>bo.edu.ucb.microservices.core</groupId>
 	<artifactId>ms-book</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name>ms-book</name>
