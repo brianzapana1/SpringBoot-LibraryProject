@@ -1,38 +1,35 @@
 # Stage 1: Build the application
-FROM openjdk:17-jdk-slim as build
+FROM maven:3.9.6-eclipse-temurin-17 AS builder
 
-# Install git (needed for config server git repository access)
-RUN apt-get update && apt-get install -y git && apt-get clean
+WORKDIR /workspace/app
 
-WORKDIR /app
-
-# Copy Maven wrapper and pom.xml
-COPY mvnw pom.xml ./
-COPY .mvn .mvn/
+# Copy Maven configuration
+COPY pom.xml ./
 
 # Download dependencies
-RUN ./mvnw dependency:resolve
+RUN mvn dependency:go-offline
 
-# Copy source code
+# Copy source code and build
 COPY src ./src
-
-# Build the application
-RUN ./mvnw clean package -DskipTests
+RUN mvn clean package -DskipTests
 
 # Stage 2: Run the application
-FROM openjdk:17-jre-slim
+FROM eclipse-temurin:17-jre-alpine
+
+# Install curl for health checks
+RUN apk add --no-cache curl
 
 WORKDIR /app
 
-# Copy the JAR file from the build stage
-COPY --from=build /app/target/gateway-*.jar app.jar
+# Copy JAR from build stage
+COPY --from=builder /workspace/app/target/*.jar app.jar
 
-# Expose the port
-EXPOSE 8081
+# Expose port
+EXPOSE 8080
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-  CMD curl -f http://localhost:8081/actuator/health || exit 1
+  CMD curl -f http://localhost:8080/actuator/health || exit 1
 
-# Run the application
+# Run application
 ENTRYPOINT ["java", "-jar", "app.jar"]

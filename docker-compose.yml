@@ -1,0 +1,173 @@
+services:
+  # Keycloak Authentication Server
+  keycloak:
+    image: quay.io/keycloak/keycloak:23.0.3
+    container_name: keycloak
+    command: start-dev
+    environment:
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin123
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://book-postgres:5432/keycloak_db
+      KC_DB_USERNAME: book_user
+      KC_DB_PASSWORD: book_pass
+      KC_DB_SCHEMA: public
+    ports:
+      - "8180:8080"
+    depends_on:
+      book-postgres:
+        condition: service_healthy
+    networks:
+      - microservices-network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/health/ready || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 120s
+
+  # PostgreSQL Database
+  book-postgres:
+    image: postgres:15-alpine
+    container_name: book-postgres
+    environment:
+      POSTGRES_DB: book_db
+      POSTGRES_USER: book_user
+      POSTGRES_PASSWORD: book_pass
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-scripts:/docker-entrypoint-initdb.d
+    networks:
+      - microservices-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U book_user -d book_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # pgAdmin UI vinculado al Postgres del sistema
+  pgadmin:
+    image: dpage/pgadmin4:8.5
+    container_name: pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@demo.com
+      PGADMIN_DEFAULT_PASSWORD: Admin123!
+      PGADMIN_CONFIG_ENHANCED_COOKIE_PROTECTION: "False"
+      PGADMIN_LISTEN_PORT: 8081
+    depends_on:
+      book-postgres:
+        condition: service_healthy
+    ports:
+      - "8081:8081"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+      - ./pgadmin/servers.json:/pgadmin4/servers.json:ro
+    networks:
+      - microservices-network
+
+  # Config Server
+  config-server:
+    build:
+      context: ./config-server
+      dockerfile: Dockerfile
+    container_name: config-server
+    ports:
+      - "8888:8888"
+    environment:
+      - SPRING_PROFILES_ACTIVE=git
+    networks:
+      - microservices-network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s http://localhost:8888 > /dev/null || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+  # Discovery Server (Eureka)
+  discovery-server:
+    build:
+      context: ./discovery-server
+      dockerfile: Dockerfile
+    container_name: discovery-server
+    ports:
+      - "8761:8761"
+    environment:
+      - SPRING_CLOUD_CONFIG_URI=http://config-server:8888
+    depends_on:
+      config-server:
+        condition: service_healthy
+    networks:
+      - microservices-network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8761/actuator/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 90s
+
+  # MS-Book Service (Solo acceso interno - NO puerto externo)
+  ms-book:
+    build:
+      context: .
+      dockerfile: ms-book/Dockerfile
+    container_name: ms-book
+    # NO PORTS - Solo acceso interno a través del Gateway
+    environment:
+      - SPRING_CLOUD_CONFIG_URI=http://config-server:8888
+      - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://discovery-server:8761/eureka
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://book-postgres:5432/book_db
+      - SPRING_DATASOURCE_USERNAME=book_user
+      - SPRING_DATASOURCE_PASSWORD=book_pass
+    depends_on:
+      config-server:
+        condition: service_healthy
+      discovery-server:
+        condition: service_healthy
+      book-postgres:
+        condition: service_healthy
+    networks:
+      - microservices-network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8082/ms-book/v1/api/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 120s
+
+  # Gateway Service - ÚNICO PUNTO DE ACCESO EXTERNO
+  gateway:
+    build:
+      context: ./gateway
+      dockerfile: Dockerfile
+    container_name: gateway
+    ports:
+      - "8090:8080"  # ÚNICO puerto externo para acceso a todos los microservicios
+    environment:
+      - SPRING_CLOUD_CONFIG_URI=http://config-server:8888
+      - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://discovery-server:8761/eureka
+    depends_on:
+      config-server:
+        condition: service_healthy
+      discovery-server:
+        condition: service_healthy
+      ms-book:
+        condition: service_healthy
+    networks:
+      - microservices-network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/actuator/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 120s
+
+networks:
+  microservices-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  pgadmin_data:

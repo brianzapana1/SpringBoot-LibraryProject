@@ -4,21 +4,45 @@ server:
 spring:
   application:
     name: config-server
+  profiles:
+    active: git
   cloud:
     config:
       server:
         git:
-          uri: https://github.com/Fesur/config-repo.git
+          uri: https://github.com/Fesur/config-repo
           default-label: master
-          clone-on-start: true
+          search-paths: .
           timeout: 10
-          try-master-branch: true
+          clone-on-start: true
+        # Fallback to native for local development
+        native:
+          search-locations: classpath:/config-repo
+        encrypt:
+          enabled: true
+  security:
+    user:
+      name: config
+      password: config123
+      roles: ADMIN
+
+# Encryption key for Spring Cloud Config
+encrypt:
+  key: MySecretEncryptionKey123456789
 
 management:
   endpoints:
     web:
       exposure:
         include: "*"
+  security:
+    enabled: false
+
+# Additional security overrides for testing
+security:
+  basic:
+    enabled: false
+  require-ssl: false
 
 app:
   eureka-server: discovery-server
@@ -31,3 +55,9 @@ eureka:
     fetch-registry: true
   instance:
     prefer-ip-address: true
+    hostname: config-server
+
+logging:
+  level:
+    org.springframework.cloud.config.server: DEBUG
+    org.eclipse.jgit: DEBUG

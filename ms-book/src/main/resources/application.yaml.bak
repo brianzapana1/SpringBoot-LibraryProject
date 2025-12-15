@@ -1,0 +1,46 @@
+spring:
+  application:
+    name: ms-book
+  config:
+    import: "configserver:http://localhost:8888"
+  cloud:
+    config:
+      enabled: true
+      uri: http://localhost:8888
+      fail-fast: true
+      retry:
+        initial-interval: 1000
+        max-attempts: 6
+        max-interval: 2000
+        multiplier: 1.1
+
+# Configuración local comentada - ms-book DEBE usar Config Server
+#server:
+#  port: 8082
+#
+#management:
+#  endpoints:
+#    web:
+#      exposure:
+#        include: "*"
+#  endpoint:
+#    health:
+#      show-details: always
+#
+#app:
+#  eureka-server: localhost
+#
+#eureka:
+#  client:
+#    serviceUrl:
+#      defaultZone: http://${app.eureka-server}:8761/eureka/
+#    register-with-eureka: true
+#    fetch-registry: true
+#  instance:
+#    prefer-ip-address: true
+#    instance-id: ${spring.application.name}:${spring.application.instance-id:${random.value}}
+
+logging:
+  level:
+    root: INFO
+    '[bo.edu.ucb.microservices]': DEBUG

@@ -1,15 +1,35 @@
-FROM maven:3.9.6-eclipse-temurin-17-alpine AS builder
+# Stage 1: Build the application
+FROM maven:3.9.6-eclipse-temurin-17 AS builder
+
 WORKDIR /workspace/app
 
-COPY discovery-server/pom.xml ./
-RUN mvn -B dependency:go-offline
+# Copy Maven configuration
+COPY pom.xml ./
 
-COPY discovery-server/src ./src
-RUN mvn -B clean package -DskipTests
+# Download dependencies
+RUN mvn dependency:go-offline
 
-FROM eclipse-temurin:17-jre-jammy
+# Copy source code and build
+COPY src ./src
+RUN mvn clean package -DskipTests
+
+# Stage 2: Run the application
+FROM eclipse-temurin:17-jre-alpine
+
+# Install curl for health checks
+RUN apk add --no-cache curl
+
 WORKDIR /app
-RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
+
+# Copy JAR from build stage
 COPY --from=builder /workspace/app/target/*.jar app.jar
-EXPOSE 8761
+
+# Expose port
+EXPOSE 8000
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+  CMD curl -f http://localhost:8000/actuator/health || exit 1
+
+# Run application
 ENTRYPOINT ["java", "-jar", "app.jar"]

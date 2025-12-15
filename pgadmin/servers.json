@@ -1,0 +1,30 @@
+{
+  "Servers": {
+    "1": {
+      "Name": "Library - book_db",
+      "Group": "Library",
+      "Host": "book-postgres",
+      "Port": 5432,
+      "MaintenanceDB": "book_db",
+      "Username": "book_user",
+      "Password": "book_pass",
+      "SSLMode": "prefer",
+      "ConnectNow": true,
+      "Comment": "Base de datos principal del sistema de biblioteca",
+      "SavePassword": true
+    },
+    "2": {
+      "Name": "Keycloak - keycloak_db",
+      "Group": "Library",
+      "Host": "book-postgres",
+      "Port": 5432,
+      "MaintenanceDB": "keycloak_db",
+      "Username": "book_user",
+      "Password": "book_pass",
+      "SSLMode": "prefer",
+      "ConnectNow": false,
+      "Comment": "Base de datos utilizada por Keycloak",
+      "SavePassword": true
+    }
+  }
+}

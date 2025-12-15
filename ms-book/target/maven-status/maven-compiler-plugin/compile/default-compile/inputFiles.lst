@@ -1,3 +1,16 @@
+C:\Users\Ruddy\Documents\SIS-313 Desarrollo de software\Union front y MS\SpringBoot-LibraryProject-main\ms-book\src\main\java\bo\edu\ucb\microservices\core\book\config\CorsConfig.java
+C:\Users\Ruddy\Documents\SIS-313 Desarrollo de software\Union front y MS\SpringBoot-LibraryProject-main\ms-book\src\main\java\bo\edu\ucb\microservices\core\book\config\DataLoader.java
+C:\Users\Ruddy\Documents\SIS-313 Desarrollo de software\Union front y MS\SpringBoot-LibraryProject-main\ms-book\src\main\java\bo\edu\ucb\microservices\core\book\config\OpenApiConfig.java
+C:\Users\Ruddy\Documents\SIS-313 Desarrollo de software\Union front y MS\SpringBoot-LibraryProject-main\ms-book\src\main\java\bo\edu\ucb\microservices\core\book\config\SecurityConfig.java
+C:\Users\Ruddy\Documents\SIS-313 Desarrollo de software\Union front y MS\SpringBoot-LibraryProject-main\ms-book\src\main\java\bo\edu\ucb\microservices\core\book\config\WebClientConfig.java
 C:\Users\Ruddy\Documents\SIS-313 Desarrollo de software\Union front y MS\SpringBoot-LibraryProject-main\ms-book\src\main\java\bo\edu\ucb\microservices\core\book\controller\BookController.java
+C:\Users\Ruddy\Documents\SIS-313 Desarrollo de software\Union front y MS\SpringBoot-LibraryProject-main\ms-book\src\main\java\bo\edu\ucb\microservices\core\book\controller\DiscoveryController.java
+C:\Users\Ruddy\Documents\SIS-313 Desarrollo de software\Union front y MS\SpringBoot-LibraryProject-main\ms-book\src\main\java\bo\edu\ucb\microservices\core\book\entity\Book.java
 C:\Users\Ruddy\Documents\SIS-313 Desarrollo de software\Union front y MS\SpringBoot-LibraryProject-main\ms-book\src\main\java\bo\edu\ucb\microservices\core\book\exception\GlobalExceptionHandler.java
 C:\Users\Ruddy\Documents\SIS-313 Desarrollo de software\Union front y MS\SpringBoot-LibraryProject-main\ms-book\src\main\java\bo\edu\ucb\microservices\core\book\MsBookApplication.java
+C:\Users\Ruddy\Documents\SIS-313 Desarrollo de software\Union front y MS\SpringBoot-LibraryProject-main\ms-book\src\main\java\bo\edu\ucb\microservices\core\book\repository\BookRepository.java
+C:\Users\Ruddy\Documents\SIS-313 Desarrollo de software\Union front y MS\SpringBoot-LibraryProject-main\ms-book\src\main\java\bo\edu\ucb\microservices\core\book\repository\BookRepositoryCustom.java
+C:\Users\Ruddy\Documents\SIS-313 Desarrollo de software\Union front y MS\SpringBoot-LibraryProject-main\ms-book\src\main\java\bo\edu\ucb\microservices\core\book\repository\impl\BookRepositoryCustomImpl.java
+C:\Users\Ruddy\Documents\SIS-313 Desarrollo de software\Union front y MS\SpringBoot-LibraryProject-main\ms-book\src\main\java\bo\edu\ucb\microservices\core\book\service\BookService.java
+C:\Users\Ruddy\Documents\SIS-313 Desarrollo de software\Union front y MS\SpringBoot-LibraryProject-main\ms-book\src\main\java\bo\edu\ucb\microservices\core\book\service\DiscoveryService.java
+C:\Users\Ruddy\Documents\SIS-313 Desarrollo de software\Union front y MS\SpringBoot-LibraryProject-main\ms-book\src\main\java\bo\edu\ucb\ms_book\config\OpenApiConfig.java

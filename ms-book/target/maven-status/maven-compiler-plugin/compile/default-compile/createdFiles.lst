@@ -1,3 +1,16 @@
-bo\edu\ucb\microservices\core\book\controller\BookController.class
+bo\edu\ucb\ms_book\config\OpenApiConfig.class
 bo\edu\ucb\microservices\core\book\exception\GlobalExceptionHandler.class
 bo\edu\ucb\microservices\core\book\MsBookApplication.class
+bo\edu\ucb\microservices\core\book\config\WebClientConfig.class
+bo\edu\ucb\microservices\core\book\config\SecurityConfig.class
+bo\edu\ucb\microservices\core\book\config\CorsConfig.class
+bo\edu\ucb\microservices\core\book\config\DataLoader.class
+bo\edu\ucb\microservices\core\book\service\DiscoveryService.class
+bo\edu\ucb\microservices\core\book\controller\DiscoveryController.class
+bo\edu\ucb\microservices\core\book\repository\impl\BookRepositoryCustomImpl.class
+bo\edu\ucb\microservices\core\book\controller\BookController.class
+bo\edu\ucb\microservices\core\book\entity\Book.class
+bo\edu\ucb\microservices\core\book\config\OpenApiConfig.class
+bo\edu\ucb\microservices\core\book\repository\BookRepositoryCustom.class
+bo\edu\ucb\microservices\core\book\service\BookService.class
+bo\edu\ucb\microservices\core\book\repository\BookRepository.class

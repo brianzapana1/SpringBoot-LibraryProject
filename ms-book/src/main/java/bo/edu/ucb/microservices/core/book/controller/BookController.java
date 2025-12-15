@@ -1,66 +1,48 @@
 package bo.edu.ucb.microservices.core.book.controller;
 
+import bo.edu.ucb.microservices.core.book.entity.Book;
+import bo.edu.ucb.microservices.core.book.service.BookService;
+import bo.edu.ucb.microservices.util.http.ServiceUtil;
+
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+//import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
 
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.tags.Tag;
-import io.swagger.v3.oas.annotations.Parameter;
-import org.springframework.validation.annotation.Validated;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.Min;
-
-import bo.edu.ucb.microservices.dto.book.BookDto;
-import bo.edu.ucb.microservices.util.exceptions.InvalidInputException;
-import bo.edu.ucb.microservices.util.exceptions.NotFoundException;
-import bo.edu.ucb.microservices.util.http.ServiceUtil;
-
-import java.util.List;
-import java.util.ArrayList;
+import java.time.LocalDate;
+import java.util.*;
 import java.util.stream.Collectors;
 
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
+
+@Tag(name = "Book Catalog", description = "API para gestión del catálogo de libros")
+@SecurityRequirement(name = "bearerAuth")
 @RestController
-@Tag(name = "Catálogo de Libros", description = "API para búsqueda y consulta del catálogo de libros")
-@Validated
-@RequestMapping("/v1/catalog")
+@RequestMapping("/ms-book/v1/api")
 public class BookController {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(BookController.class);
+    private static final Logger LOG = LoggerFactory.getLogger(BookController.class);
+
+    private final BookService bookService;
     private final ServiceUtil serviceUtil;
-    
-    // Simulación de datos del catálogo para demostración (mutable para permitir adiciones)
-    private final List<BookDto> catalogData;
 
     @Autowired
-    public BookController(ServiceUtil serviceUtil){
+    public BookController(BookService bookService, ServiceUtil serviceUtil) {
+        this.bookService = bookService;
         this.serviceUtil = serviceUtil;
-        this.catalogData = initializeCatalog();
-    }
-
-    /**
-     * Inicializa el catálogo con datos de ejemplo
-     */
-    private List<BookDto> initializeCatalog() {
-        List<BookDto> books = new ArrayList<>();
-        books.add(new BookDto(1, "El Señor de los Anillos", "9780544003415", "J.R.R. Tolkien", "Fantasía"));
-        books.add(new BookDto(2, "Cien Años de Soledad", "9780307474728", "Gabriel García Márquez", "Realismo Mágico"));
-        books.add(new BookDto(3, "1984", "9780451524935", "George Orwell", "Distopía"));
-        books.add(new BookDto(4, "Don Quijote de la Mancha", "9788491050940", "Miguel de Cervantes", "Clásico"));
-        books.add(new BookDto(5, "Harry Potter y la Piedra Filosofal", "9788498383440", "J.K. Rowling", "Fantasía"));
-        books.add(new BookDto(6, "El Principito", "9780156012195", "Antoine de Saint-Exupéry", "Fábula"));
-        books.add(new BookDto(7, "Crónica de una Muerte Anunciada", "9780307388285", "Gabriel García Márquez", "Realismo Mágico"));
-        books.add(new BookDto(8, "El Hobbit", "9780547928227", "J.R.R. Tolkien", "Fantasía"));
-        return books;
     }
 
     /**
@@ -69,221 +51,401 @@ public class BookController {
     @Operation(summary = "Obtener catálogo completo", 
                description = "Retorna todos los libros disponibles en el catálogo con soporte de paginación")
     @GetMapping(value = "/books", produces = "application/json")
-    public List<BookDto> getAllBooks(
-            @Parameter(description = "Página a obtener (empezando desde 0)", example = "0")
-            @RequestParam(defaultValue = "0") @Min(0) int page,
-            @Parameter(description = "Número de libros por página", example = "10")
-            @RequestParam(defaultValue = "10") @Min(1) int size) {
+    //@PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
+    public Page<Book> getAllBooks(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
         
-        LOGGER.info("Obteniendo catálogo completo - Página: {}, Tamaño: {}", page, size);
+        LOG.info("Obteniendo catálogo de libros - página: {}, tamaño: {}", page, size);
         
-        int start = page * size;
-        int end = Math.min(start + size, catalogData.size());
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Book> books = bookService.getAllBooks(pageable);
         
-        if (start >= catalogData.size()) {
-            return new ArrayList<>();
+        LOG.info("Catálogo obtenido: {} libros en página {}", books.getNumberOfElements(), page);
+        return books;
+    }
+
+    /**
+     * Obtener todos los libros sin paginación
+     */
+    @GetMapping(value = "/books/all", produces = "application/json")
+    //@PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
+    public List<Book> getAllBooksNoPagination() {
+        LOG.info("Obteniendo todos los libros desde {}", serviceUtil.getServiceAddress());
+        List<Book> books = bookService.getAllBooks();
+        return books;
+    }
+
+    /**
+     * Buscar libro por ID
+     */
+    @Operation(summary = "Buscar libro por ID", 
+               description = "Retorna un libro específico basado en su ID")
+    @GetMapping(value = "/books/{bookId}", produces = "application/json")
+    //@PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
+    public ResponseEntity<Book> getBookById(@PathVariable Long bookId) {
+        
+        LOG.info("Buscando libro con ID: {}", bookId);
+        
+        Optional<Book> book = bookService.getBookById(bookId);
+        
+        if (book.isPresent()) {
+            LOG.info("Libro encontrado: {}", book.get().getTitle());
+            return ResponseEntity.ok(book.get());
+        } else {
+            LOG.warn("Libro con ID {} no encontrado", bookId);
+            return ResponseEntity.notFound().build();
         }
+    }
+
+    /**
+     * Crear un nuevo libro
+     */
+    @Operation(summary = "Crear nuevo libro", 
+               description = "Añade un nuevo libro al catálogo")
+    @PostMapping(value = "/books", produces = "application/json")
+    //@PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Book> createBook(@Valid @RequestBody Book book) {
         
-        return catalogData.subList(start, end);
+        LOG.info("Creando nuevo libro: {}", book.getTitle());
+        
+        try {
+            Book createdBook = bookService.saveBook(book);
+            LOG.info("Libro creado exitosamente con ID: {}", createdBook.getId());
+            return ResponseEntity.status(HttpStatus.CREATED).body(createdBook);
+        } catch (Exception e) {
+            LOG.error("Error al crear libro: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.CONFLICT).build();
+        }
+    }
+
+    /**
+     * Actualizar un libro existente
+     */
+    @Operation(summary = "Actualizar libro", 
+               description = "Actualiza la información de un libro existente")
+    @PutMapping(value = "/books/{bookId}", produces = "application/json")
+    //@PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Book> updateBook(@PathVariable Long bookId, @Valid @RequestBody Book book) {
+        
+        LOG.info("Actualizando libro con ID: {}", bookId);
+        
+        try {
+            Book updatedBook = bookService.updateBook(bookId, book);
+            LOG.info("Libro actualizado exitosamente: {}", updatedBook.getTitle());
+            return ResponseEntity.ok(updatedBook);
+        } catch (RuntimeException e) {
+            LOG.error("Error al actualizar libro: {}", e.getMessage());
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    /**
+     * Eliminar un libro
+     */
+    @Operation(summary = "Eliminar libro", 
+               description = "Elimina un libro del catálogo")
+    @DeleteMapping(value = "/books/{bookId}")
+    //@PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Void> deleteBook(@PathVariable Long bookId) {
+        
+        LOG.info("Eliminando libro con ID: {}", bookId);
+        
+        try {
+            bookService.deleteBook(bookId);
+            LOG.info("Libro eliminado exitosamente");
+            return ResponseEntity.noContent().build();
+        } catch (RuntimeException e) {
+            LOG.error("Error al eliminar libro: {}", e.getMessage());
+            return ResponseEntity.notFound().build();
+        }
     }
 
     /**
      * Buscar libros por título
      */
     @Operation(summary = "Buscar por título", 
-               description = "Busca libros que contengan el término especificado en el título")
+               description = "Busca libros que contengan el título especificado")
     @GetMapping(value = "/search/title", produces = "application/json")
-    public List<BookDto> searchByTitle(
-            @Parameter(description = "Término de búsqueda en el título", example = "señor")
-            @RequestParam String query) {
+    public List<Book> findByTitle(@RequestParam String query) {
         
-        LOGGER.info("Buscando libros por título: {}", query);
+        LOG.info("Buscando libros por título: {}", query);
         
-        if (query == null || query.trim().isEmpty()) {
-            throw new InvalidInputException("El término de búsqueda no puede estar vacío");
-        }
+        List<Book> books = bookService.getBooksByTitle(query);
         
-        return catalogData.stream()
-                .filter(book -> book.getTitle().toLowerCase().contains(query.toLowerCase()))
-                .collect(Collectors.toList());
+        LOG.info("Encontrados {} libros que contienen '{}'", books.size(), query);
+        return books;
     }
 
     /**
      * Buscar libros por autor
      */
     @Operation(summary = "Buscar por autor", 
-               description = "Busca libros que contengan el término especificado en el nombre del autor")
+               description = "Busca libros del autor especificado")
     @GetMapping(value = "/search/author", produces = "application/json")
-    public List<BookDto> searchByAuthor(
-            @Parameter(description = "Término de búsqueda en el autor", example = "tolkien")
-            @RequestParam String query) {
+    public List<Book> findByAuthor(@RequestParam String query) {
         
-        LOGGER.info("Buscando libros por autor: {}", query);
+        LOG.info("Buscando libros por autor: {}", query);
         
-        if (query == null || query.trim().isEmpty()) {
-            throw new InvalidInputException("El término de búsqueda no puede estar vacío");
-        }
+        List<Book> books = bookService.getBooksByAuthor(query);
         
-        return catalogData.stream()
-                .filter(book -> book.getAuthor().toLowerCase().contains(query.toLowerCase()))
-                .collect(Collectors.toList());
+        LOG.info("Encontrados {} libros del autor '{}'", books.size(), query);
+        return books;
     }
 
     /**
      * Buscar libros por género
      */
     @Operation(summary = "Buscar por género", 
-               description = "Busca libros de un género específico")
+               description = "Busca libros de la categoría especificada")
     @GetMapping(value = "/search/genre", produces = "application/json")
-    public List<BookDto> searchByGenre(
-            @Parameter(description = "Género de libro", example = "Fantasía")
-            @RequestParam String genre) {
+    public List<Book> findByGenre(@RequestParam String genre) {
         
-        LOGGER.info("Buscando libros por género: {}", genre);
+        LOG.info("Buscando libros por género: {}", genre);
         
-        if (genre == null || genre.trim().isEmpty()) {
-            throw new InvalidInputException("El género no puede estar vacío");
-        }
+        List<Book> books = bookService.getBooksByGenre(genre);
         
-        return catalogData.stream()
-                .filter(book -> book.getGenre().toLowerCase().contains(genre.toLowerCase()))
-                .collect(Collectors.toList());
+        LOG.info("Encontrados {} libros del género '{}'", books.size(), genre);
+        return books;
     }
 
     /**
-     * Buscar libro por ISBN exacto
+     * Buscar libros por ISBN
      */
     @Operation(summary = "Buscar por ISBN", 
-               description = "Busca un libro específico por su ISBN")
+               description = "Busca un libro por su código ISBN")
     @GetMapping(value = "/search/isbn", produces = "application/json")
-    public BookDto searchByISBN(
-            @Parameter(description = "ISBN del libro", example = "9780544003415")
-            @RequestParam String isbn) {
+    public ResponseEntity<Book> findByIsbn(@RequestParam String isbn) {
         
-        LOGGER.info("Buscando libro por ISBN: {}", isbn);
+        LOG.info("Buscando libro por ISBN: {}", isbn);
         
-        if (isbn == null || isbn.trim().isEmpty()) {
-            throw new InvalidInputException("El ISBN no puede estar vacío");
+        Optional<Book> book = bookService.getBookByIsbn(isbn);
+        
+        if (book.isPresent()) {
+            LOG.info("Libro encontrado por ISBN: {}", book.get().getTitle());
+            return ResponseEntity.ok(book.get());
+        } else {
+            LOG.warn("No se encontró libro con ISBN: {}", isbn);
+            return ResponseEntity.notFound().build();
         }
-        
-        return catalogData.stream()
-                .filter(book -> book.getIsbn().equals(isbn))
-                .findFirst()
-                .orElseThrow(() -> new NotFoundException("No se encontró libro con ISBN: " + isbn));
     }
 
     /**
-     * Obtener detalles de un libro específico por ID
+     * Obtener libros disponibles
      */
-    @Operation(summary = "Obtener detalles de libro", 
-               description = "Obtiene los detalles completos de un libro por su ID")
-    @GetMapping(value = "/books/{bookId}", produces = "application/json")
-    public BookDto getBookDetails(
-            @Parameter(description = "ID del libro", example = "1")
-            @PathVariable("bookId") @Min(1) int bookId) {
-        
-        LOGGER.info("Obteniendo detalles del libro con ID: {}", bookId);
-        
-        return catalogData.stream()
-                .filter(book -> book.getBookId() == bookId)
-                .findFirst()
-                .orElseThrow(() -> new NotFoundException("No se encontró libro con ID: " + bookId));
+    @GetMapping(value = "/available", produces = "application/json")
+    public List<Book> getAvailableBooks() {
+        LOG.info("Obteniendo libros disponibles desde {}", serviceUtil.getServiceAddress());
+        List<Book> books = bookService.getAvailableBooks();
+        return books;
     }
 
     /**
-     * Búsqueda general en todo el catálogo
+     * Obtener información del usuario autenticado a través del token JWT
      */
-    @Operation(summary = "Búsqueda general", 
-               description = "Busca el término en título, autor y género simultáneamente")
-    @GetMapping(value = "/search", produces = "application/json")
-    public List<BookDto> generalSearch(
-            @Parameter(description = "Término de búsqueda general", example = "fantasía")
-            @RequestParam String query) {
-        
-        LOGGER.info("Realizando búsqueda general: {}", query);
-        
-        if (query == null || query.trim().isEmpty()) {
-            throw new InvalidInputException("El término de búsqueda no puede estar vacío");
+    @Operation(summary = "Información del usuario", 
+               description = "Retorna información básica del usuario autenticado y los claims del token")
+    @GetMapping(value = "/user/info", produces = "application/json")
+    public ResponseEntity<Map<String, Object>> getAuthenticatedUserInfo(Authentication authentication) {
+
+        if (authentication == null || !authentication.isAuthenticated()) {
+            LOG.warn("Solicitud de user info sin autenticación válida");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("message", "Usuario no autenticado"));
         }
-        
-        String lowerQuery = query.toLowerCase();
-        return catalogData.stream()
-                .filter(book -> 
-                    book.getTitle().toLowerCase().contains(lowerQuery) ||
-                    book.getAuthor().toLowerCase().contains(lowerQuery) ||
-                    book.getGenre().toLowerCase().contains(lowerQuery))
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("username", authentication.getName());
+        response.put("authenticated", authentication.isAuthenticated());
+
+        List<String> roles = authentication.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
                 .collect(Collectors.toList());
+        response.put("roles", roles);
+
+        if (authentication instanceof JwtAuthenticationToken jwtAuth) {
+            response.put("tokenAttributes", jwtAuth.getTokenAttributes());
+        }
+
+        return ResponseEntity.ok(response);
     }
 
     /**
-     * Crear un nuevo libro en el catálogo
+     * Prestar libro
      */
-    @Operation(summary = "Crear nuevo libro", 
-               description = "Añade un nuevo libro al catálogo de la biblioteca")
-    @PostMapping(value = "/books", produces = "application/json")
-    public ResponseEntity<BookDto> createBook(
-            @Parameter(description = "Datos del libro a crear")
-            @Valid @RequestBody BookDto bookRequest) {
+    @PostMapping("/books/{id}/borrow")
+    @Operation(summary = "Prestar libro", description = "Registra el préstamo de un libro")
+    public ResponseEntity<Map<String, String>> borrowBook(@PathVariable Long id) {
+        LOG.info("Prestando libro ID: {} desde {}", id, serviceUtil.getServiceAddress());
+        boolean success = bookService.borrowBook(id);
         
-        LOGGER.info("Creando nuevo libro: {}", bookRequest.getTitle());
-        
-        // Validaciones básicas
-        if (bookRequest.getTitle() == null || bookRequest.getTitle().trim().isEmpty()) {
-            throw new InvalidInputException("El título del libro no puede estar vacío");
-        }
-        if (bookRequest.getAuthor() == null || bookRequest.getAuthor().trim().isEmpty()) {
-            throw new InvalidInputException("El autor del libro no puede estar vacío");
-        }
-        if (bookRequest.getIsbn() == null || bookRequest.getIsbn().trim().isEmpty()) {
-            throw new InvalidInputException("El ISBN del libro no puede estar vacío");
-        }
-        if (bookRequest.getGenre() == null || bookRequest.getGenre().trim().isEmpty()) {
-            throw new InvalidInputException("El género del libro no puede estar vacío");
-        }
-        
-        // Verificar que el ISBN no exista ya
-        boolean isbnExists = catalogData.stream()
-                .anyMatch(book -> book.getIsbn().equals(bookRequest.getIsbn()));
-        if (isbnExists) {
-            throw new InvalidInputException("Ya existe un libro con el ISBN: " + bookRequest.getIsbn());
-        }
-        
-        // Generar nuevo ID (buscar el máximo actual + 1)
-        int newId = catalogData.stream()
-                .mapToInt(BookDto::getBookId)
-                .max()
-                .orElse(0) + 1;
-        
-        // Crear el nuevo libro
-        BookDto newBook = new BookDto(
-            newId,
-            bookRequest.getTitle().trim(),
-            bookRequest.getIsbn().trim(),
-            bookRequest.getAuthor().trim(),
-            bookRequest.getGenre().trim()
+        Map<String, String> response = Map.of(
+            "message", success ? "Libro prestado exitosamente" : "No se pudo prestar el libro",
+            "serviceAddress", serviceUtil.getServiceAddress()
         );
         
-        // Añadir al catálogo
-        catalogData.add(newBook);
-        
-        LOGGER.info("Libro creado exitosamente con ID: {}", newId);
-        
-        return new ResponseEntity<>(newBook, HttpStatus.CREATED);
+        return success ? ResponseEntity.ok(response) 
+                      : ResponseEntity.status(HttpStatus.CONFLICT).body(response);
     }
 
     /**
-     * Obtener géneros disponibles en el catálogo
+     * Devolver libro
      */
-    @Operation(summary = "Obtener géneros", 
-               description = "Retorna la lista de géneros únicos disponibles en el catálogo")
-    @GetMapping(value = "/genres", produces = "application/json")
-    public List<String> getAvailableGenres() {
-        LOGGER.info("Obteniendo géneros disponibles");
+    @PostMapping("/books/{id}/return")
+    @Operation(summary = "Devolver libro", description = "Registra la devolución de un libro")
+    public ResponseEntity<Map<String, String>> returnBook(@PathVariable Long id) {
+        LOG.info("Devolviendo libro ID: {} desde {}", id, serviceUtil.getServiceAddress());
+        boolean success = bookService.returnBook(id);
         
-        return catalogData.stream()
-                .map(BookDto::getGenre)
-                .distinct()
-                .sorted()
-                .collect(Collectors.toList());
+        Map<String, String> response = Map.of(
+            "message", success ? "Libro devuelto exitosamente" : "No se pudo devolver el libro",
+            "serviceAddress", serviceUtil.getServiceAddress()
+        );
+        
+        return success ? ResponseEntity.ok(response) 
+                      : ResponseEntity.status(HttpStatus.CONFLICT).body(response);
+    }
+
+    /**
+     * Health check
+     */
+    @Operation(security = {})
+    @GetMapping(value = "/health", produces = "application/json")
+    public ResponseEntity<Map<String, String>> health() {
+        LOG.debug("Health check desde {}", serviceUtil.getServiceAddress());
+        Map<String, String> response = Map.of(
+            "status", "UP",
+            "service", "ms-book",
+            "serviceAddress", serviceUtil.getServiceAddress()
+        );
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * Service info endpoint
+     */
+    @GetMapping("/info")
+    public String info() {
+        return "Microservicio de Books - Versión: 1.0.0\nAddress: " + serviceUtil.getServiceAddress();
+    }
+    
+    // ========== ENDPOINTS QUE DEMUESTRAN DIFERENTES TIPOS DE CONSULTAS ==========
+    
+    /**
+     * NATIVE QUERY EXAMPLE - Obtener estadísticas por género
+     */
+    @Operation(summary = "Estadísticas por género", 
+               description = "Obtiene estadísticas de libros agrupadas por género usando consulta SQL nativa")
+    @GetMapping(value = "/statistics/genre", produces = "application/json")
+    public ResponseEntity<List<Map<String, Object>>> getBookStatisticsByGenre() {
+        LOG.info("Obteniendo estadísticas por género (Native Query)");
+        
+        List<Object[]> rawData = bookService.getBookStatisticsByGenre();
+        List<Map<String, Object>> statistics = new ArrayList<>();
+        
+        for (Object[] row : rawData) {
+            Map<String, Object> stat = new HashMap<>();
+            stat.put("genre", row[0]);
+            stat.put("totalBooks", row[1]);
+            stat.put("availableCopies", row[2]);
+            statistics.add(stat);
+        }
+        
+        return ResponseEntity.ok(statistics);
+    }
+    
+    /**
+     * NATIVE QUERY EXAMPLE - Libros más prestados
+     */
+    @Operation(summary = "Libros más prestados", 
+               description = "Obtiene los libros más prestados usando consulta SQL nativa")
+    @GetMapping(value = "/popular", produces = "application/json")
+    public List<Book> getMostBorrowedBooks(@RequestParam(defaultValue = "5") int limit) {
+        LOG.info("Obteniendo {} libros más prestados (Native Query)", limit);
+        return bookService.getMostBorrowedBooks(limit);
+    }
+    
+    /**
+     * NATIVE QUERY EXAMPLE - Búsqueda de texto completo
+     */
+    @Operation(summary = "Búsqueda de texto completo", 
+               description = "Busca en título, autor y descripción usando consulta SQL nativa")
+    @GetMapping(value = "/search/fulltext", produces = "application/json")
+    public List<Book> searchBooksFullText(@RequestParam String query) {
+        LOG.info("Búsqueda de texto completo: {} (Native Query)", query);
+        return bookService.searchBooksFullText(query);
+    }
+    
+    /**
+     * DERIVED QUERY EXAMPLE - Libros por rango de páginas
+     */
+    @Operation(summary = "Buscar por rango de páginas", 
+               description = "Busca libros entre un rango específico de páginas usando Derived Query")
+    @GetMapping(value = "/search/pages", produces = "application/json")
+    public List<Book> getBooksByPageRange(
+            @RequestParam Integer minPages, 
+            @RequestParam Integer maxPages) {
+        
+        LOG.info("Buscando libros con páginas entre {} y {} (Derived Query)", minPages, maxPages);
+        return bookService.getBooksByPageRange(minPages, maxPages);
+    }
+    
+    /**
+     * JPQL QUERY EXAMPLE - Autores únicos
+     */
+    @Operation(summary = "Obtener autores únicos", 
+               description = "Obtiene lista de autores únicos usando consulta JPQL")
+    @GetMapping(value = "/authors", produces = "application/json")
+    public List<String> getDistinctAuthors() {
+        LOG.info("Obteniendo autores únicos (JPQL Query)");
+        return bookService.getDistinctAuthors();
+    }
+    
+    /**
+     * CRITERIA QUERY EXAMPLE - Búsqueda avanzada
+     */
+    @Operation(summary = "Búsqueda avanzada", 
+               description = "Búsqueda con múltiples criterios usando Criteria API")
+    @GetMapping(value = "/search/advanced", produces = "application/json")
+    public List<Book> searchBooksAdvanced(
+            @RequestParam(required = false) String title,
+            @RequestParam(required = false) String author,
+            @RequestParam(required = false) String genre,
+            @RequestParam(required = false) String fromDate,
+            @RequestParam(required = false) String toDate,
+            @RequestParam(required = false) Integer minPages,
+            @RequestParam(required = false) Integer maxPages) {
+        
+        LOG.info("Búsqueda avanzada con Criteria API");
+        
+        LocalDate from = (fromDate != null) ? LocalDate.parse(fromDate) : null;
+        LocalDate to = (toDate != null) ? LocalDate.parse(toDate) : null;
+        
+        return bookService.searchBooksWithCriteria(title, author, genre, from, to, minPages, maxPages);
+    }
+    
+    /**
+     * CRITERIA QUERY EXAMPLE - Búsqueda avanzada con paginación
+     */
+    @Operation(summary = "Búsqueda avanzada paginada", 
+               description = "Búsqueda con paginación usando Criteria API")
+    @GetMapping(value = "/search/advanced/paginated", produces = "application/json")
+    public Page<Book> searchBooksAdvancedPaginated(
+            @RequestParam(required = false) String searchTerm,
+            @RequestParam(required = false) String genre,
+            @RequestParam(required = false) Boolean available,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "title") String sortBy,
+            @RequestParam(defaultValue = "ASC") String sortDirection) {
+        
+        LOG.info("Búsqueda avanzada paginada con Criteria API");
+        
+        Pageable pageable = PageRequest.of(page, size, 
+            "DESC".equalsIgnoreCase(sortDirection) ? 
+                Sort.by(sortBy).descending() : 
+                Sort.by(sortBy).ascending());
+        
+        return bookService.searchBooksAdvanced(searchTerm, genre, available, pageable);
     }
 }

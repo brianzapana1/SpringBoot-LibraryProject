@@ -1,0 +1,19 @@
+server:
+  port: 8889
+
+spring:
+  application:
+    name: config-server-test
+  cloud:
+    config:
+      server:
+        native:
+          search-locations: classpath:/config-repo
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  security:
+    enabled: false

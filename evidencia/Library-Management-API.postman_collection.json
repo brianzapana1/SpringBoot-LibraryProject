@@ -1,0 +1,1069 @@
+{
+	"info": {
+		"_postman_id": "library-system-2025",
+		"name": "Library Management System - Complete API",
+		"description": "Colección completa de APIs para el Sistema de Gestión de Biblioteca.\nTodas las peticiones se hacen a través del Gateway (puerto 8090) que redirige a los microservicios.\n\n🔐 AUTENTICACIÓN JWT:\n- Los endpoints están protegidos con Keycloak\n- Esta colección obtiene automáticamente el token JWT\n- El token se renueva automáticamente antes de cada petición\n- Usuarios de prueba configurados en variables",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "library-system"
+	},
+	"auth": {
+		"type": "bearer",
+		"bearer": [
+			{
+				"key": "token",
+				"value": "{{access_token}}",
+				"type": "string"
+			}
+		]
+	},
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"// ⚠️ SCRIPT DESHABILITADO - Usar método manual",
+					"// Para usar autenticación JWT:",
+					"// 1. Ir a la carpeta 'Keycloak - Authentication'",
+					"// 2. Ejecutar 'Get Access Token (Manual)'",
+					"// 3. El token se guardará automáticamente en {{access_token}}",
+					"",
+					"console.log('Pre-request: Usando token manual desde variables');"
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"// Script para verificar respuestas de autenticación",
+					"",
+					"const statusCode = pm.response.code;",
+					"const url = pm.request.url.toString();",
+					"const hasToken = !!pm.collectionVariables.get('access_token');",
+					"",
+					"// Verificar si la petición falló por autenticación",
+					"if (statusCode === 401) {",
+					"    console.error('❌ Error 401 Unauthorized - Token inválido o expirado');",
+					"    console.log('El token será renovado en la próxima petición');",
+					"    // Limpiar token para forzar renovación",
+					"    pm.collectionVariables.set('access_token', '');",
+					"    pm.collectionVariables.set('token_expiry', 0);",
+					"}",
+					"",
+					"if (statusCode === 403) {",
+					"    console.error('❌ Error 403 Forbidden - El usuario no tiene permisos para esta operación');",
+					"    console.log('Usuario actual:', pm.collectionVariables.get('keycloak_username'));",
+					"}",
+					"",
+					"// Expectativas según autenticación para endpoints protegidos (/api/)",
+					"if (url.includes('/api/')) {",
+					"  if (!hasToken) {",
+					"    pm.test('Sin token, debe responder 401', function () {",
+					"      pm.expect(pm.response.code).to.eql(401);",
+					"    });",
+					"  } else {",
+					"    pm.test('Con token válido, debe responder 2xx', function () {",
+					"      pm.expect(pm.response.code).to.be.above(199);",
+					"      pm.expect(pm.response.code).to.be.below(300);",
+					"    });",
+					"  }",
+					"}",
+					"",
+					"// Log de éxito",
+					"if (statusCode >= 200 && statusCode < 300) {",
+					"    console.log('✅ Petición exitosa -', pm.info.requestName);",
+					"}"
+				]
+			}
+		}
+	],
+	"item": [
+		{
+			"name": "Gateway - Health & Info",
+			"item": [
+				{
+					"name": "Gateway Health",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8090/gateway/health",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8090",
+							"path": ["gateway", "health"]
+						},
+						"description": "Verifica el estado del Gateway"
+					},
+					"response": []
+				},
+				{
+					"name": "Gateway Info",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8090/gateway/info",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8090",
+							"path": ["gateway", "info"]
+						},
+						"description": "Información del Gateway"
+					},
+					"response": []
+				},
+				{
+					"name": "Gateway Routes",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8090/gateway/routes",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8090",
+							"path": ["gateway", "routes"]
+						},
+						"description": "Lista todas las rutas configuradas en el Gateway"
+					},
+					"response": []
+				}
+			],
+			"description": "Endpoints de información y salud del Gateway"
+		},
+		{
+			"name": "Config Server - Endpoints",
+			"item": [
+				{
+					"name": "Get config via Gateway (ms-book/default)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{gateway_url}}/config/ms-book/default",
+							"host": ["{{gateway_url}}"],
+							"path": ["config", "ms-book", "default"]
+						},
+						"description": "Obtiene la configuración de 'ms-book' perfil 'default' pasando por el Gateway (/config/ms-book/default)."
+					},
+					"response": []
+				},
+				{
+					"name": "Get config (direct) ms-book/default",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{config_server_url}}/ms-book/default",
+							"host": ["{{config_server_url}}"],
+							"path": ["ms-book", "default"]
+						},
+						"description": "Acceso directo al Config Server (útil para debugging)."
+					},
+					"response": []
+				}
+			],
+			"description": "Endpoints del Spring Cloud Config Server para obtener configuraciones por aplicación y perfil."
+		},
+		{
+			"name": "Books - CRUD Operations",
+			"item": [
+				{
+					"name": "GET All Books (Paginated)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8090/api/books?page=0&size=10",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8090",
+							"path": ["api", "books"],
+							"query": [
+								{
+									"key": "page",
+									"value": "0",
+									"description": "Número de página (comienza en 0)"
+								},
+								{
+									"key": "size",
+									"value": "10",
+									"description": "Cantidad de libros por página"
+								}
+							]
+						},
+						"description": "Gateway redirige a: /ms-book/v1/api/books\nObtiene lista paginada de todos los libros desde PostgreSQL"
+					},
+					"response": []
+				},
+				{
+					"name": "GET All Books (No Pagination)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8090/api/books/all",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8090",
+							"path": ["api", "books", "all"]
+						},
+						"description": "Gateway redirige a: /ms-book/v1/api/books/all\nObtiene TODOS los libros sin paginación"
+					},
+					"response": []
+				},
+				{
+					"name": "GET Book by ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8090/api/books/1",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8090",
+							"path": ["api", "books", "1"]
+						},
+						"description": "Gateway redirige a: /ms-book/v1/api/books/1\nObtiene un libro específico por su ID"
+					},
+					"response": []
+				},
+				{
+					"name": "POST Create Book",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"title\": \"Harry Potter y la Piedra Filosofal\",\n  \"author\": \"J.K. Rowling\",\n  \"isbn\": \"9788478884452\",\n  \"publicationDate\": \"1997-06-26\",\n  \"pageCount\": 254,\n  \"genre\": \"Fantasía\",\n  \"description\": \"La historia de un niño mago que descubre su verdadero destino\",\n  \"availableCopies\": 10,\n  \"totalCopies\": 10\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8090/api/books",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8090",
+							"path": ["api", "books"]
+						},
+						"description": "Gateway redirige a: /ms-book/v1/api/books\nCrea un nuevo libro en la base de datos PostgreSQL.\nNOTA: No incluir 'id' - se genera automáticamente"
+					},
+					"response": []
+				},
+				{
+					"name": "PUT Update Book",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"id\": 1,\n  \"title\": \"El Señor de los Anillos - Edición Especial\",\n  \"author\": \"J.R.R. Tolkien\",\n  \"isbn\": \"9780544003415\",\n  \"publicationDate\": \"1954-07-29\",\n  \"pageCount\": 1300,\n  \"genre\": \"Fantasía Épica\",\n  \"description\": \"La trilogía completa en un solo volumen - Edición de lujo actualizada\",\n  \"availableCopies\": 8,\n  \"totalCopies\": 10\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8090/api/books/1",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8090",
+							"path": ["api", "books", "1"]
+						},
+						"description": "Gateway redirige a: /ms-book/v1/api/books/1\nActualiza un libro existente en PostgreSQL.\nNOTA: Debe incluir 'id' y todos los campos"
+					},
+					"response": []
+				},
+				{
+					"name": "DELETE Book",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8090/api/books/99",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8090",
+							"path": ["api", "books", "99"]
+						},
+						"description": "Gateway redirige a: /ms-book/v1/api/books/99\nElimina un libro de la base de datos.\nRespuesta esperada: 204 No Content"
+					},
+					"response": []
+				}
+			],
+			"description": "Operaciones CRUD básicas para gestión de libros"
+		},
+		{
+			"name": "Books - Search Operations",
+			"item": [
+				{
+					"name": "Search by Title",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8090/api/search/title?query=señor",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8090",
+							"path": ["api", "search", "title"],
+							"query": [
+								{
+									"key": "query",
+									"value": "señor",
+									"description": "Término de búsqueda en el título"
+								}
+							]
+						},
+						"description": "Gateway redirige a: /ms-book/v1/api/search/title\nBúsqueda por título usando DERIVED QUERY (ignora mayúsculas)"
+					},
+					"response": []
+				},
+				{
+					"name": "Search by Author",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8090/api/search/author?query=garcía",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8090",
+							"path": ["api", "search", "author"],
+							"query": [
+								{
+									"key": "query",
+									"value": "garcía",
+									"description": "Término de búsqueda en el autor"
+								}
+							]
+						},
+						"description": "Gateway redirige a: /ms-book/v1/api/search/author\nBúsqueda por autor usando DERIVED QUERY"
+					},
+					"response": []
+				},
+				{
+					"name": "Search by Genre",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8090/api/search/genre?genre=Fantasía",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8090",
+							"path": ["api", "search", "genre"],
+							"query": [
+								{
+									"key": "genre",
+									"value": "Fantasía",
+									"description": "Género exacto a buscar"
+								}
+							]
+						},
+						"description": "Gateway redirige a: /ms-book/v1/api/search/genre\nBúsqueda por género usando DERIVED QUERY"
+					},
+					"response": []
+				},
+				{
+					"name": "Search by Pages Range",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8090/api/search/pages?minPages=200&maxPages=500",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8090",
+							"path": ["api", "search", "pages"],
+							"query": [
+								{
+									"key": "minPages",
+									"value": "200",
+									"description": "Mínimo de páginas"
+								},
+								{
+									"key": "maxPages",
+									"value": "500",
+									"description": "Máximo de páginas"
+								}
+							]
+						},
+						"description": "Gateway redirige a: /ms-book/v1/api/search/pages\nBusca libros por rango de páginas usando DERIVED QUERY"
+					},
+					"response": []
+				},
+				{
+					"name": "Full Text Search",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8090/api/search/fulltext?query=aventura",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8090",
+							"path": ["api", "search", "fulltext"],
+							"query": [
+								{
+									"key": "query",
+									"value": "aventura",
+									"description": "Busca en título, autor y descripción"
+								}
+							]
+						},
+						"description": "Gateway redirige a: /ms-book/v1/api/search/fulltext\nBúsqueda en título, autor y descripción usando NATIVE QUERY"
+					},
+					"response": []
+				},
+				{
+					"name": "Advanced Search",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8090/api/search/advanced?title=señor&author=tolkien&genre=Fantasía",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8090",
+							"path": ["api", "search", "advanced"],
+							"query": [
+								{
+									"key": "title",
+									"value": "señor",
+									"description": "Búsqueda parcial en título (opcional)"
+								},
+								{
+									"key": "author",
+									"value": "tolkien",
+									"description": "Búsqueda parcial en autor (opcional)"
+								},
+								{
+									"key": "genre",
+									"value": "Fantasía",
+									"description": "Género exacto (opcional)"
+								}
+							]
+						},
+						"description": "Gateway redirige a: /ms-book/v1/api/search/advanced\nBúsqueda avanzada combinando múltiples criterios usando CRITERIA QUERY"
+					},
+					"response": []
+				},
+				{
+					"name": "Advanced Search Paginated",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8090/api/search/advanced/paginated?searchTerm=ciencia&genre=Ciencia&available=true&page=0&size=5",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8090",
+							"path": ["api", "search", "advanced", "paginated"],
+							"query": [
+								{
+									"key": "searchTerm",
+									"value": "ciencia",
+									"description": "Término general de búsqueda"
+								},
+								{
+									"key": "genre",
+									"value": "Ciencia",
+									"description": "Filtro por género"
+								},
+								{
+									"key": "available",
+									"value": "true",
+									"description": "Solo libros disponibles"
+								},
+								{
+									"key": "page",
+									"value": "0",
+									"description": "Número de página"
+								},
+								{
+									"key": "size",
+									"value": "5",
+									"description": "Tamaño de página"
+								}
+							]
+						},
+						"description": "Gateway redirige a: /ms-book/v1/api/search/advanced/paginated\nBúsqueda avanzada con paginación usando CRITERIA QUERY"
+					},
+					"response": []
+				}
+			],
+			"description": "Operaciones de búsqueda demostrando diferentes tipos de queries"
+		},
+		{
+			"name": "Books - Filters & Analytics",
+			"item": [
+				{
+					"name": "Get Available Books",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8090/api/available",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8090",
+							"path": ["api", "available"]
+						},
+						"description": "Gateway redirige a: /ms-book/v1/api/available\nObtiene solo libros con copias disponibles usando JPQL QUERY"
+					},
+					"response": []
+				},
+				{
+					"name": "Get All Authors",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8090/api/authors",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8090",
+							"path": ["api", "authors"]
+						},
+						"description": "Gateway redirige a: /ms-book/v1/api/authors\nObtiene lista única de autores ordenados alfabéticamente usando JPQL QUERY"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Statistics by Genre",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8090/api/statistics/genre",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8090",
+							"path": ["api", "statistics", "genre"]
+						},
+						"description": "Gateway redirige a: /ms-book/v1/api/statistics/genre\nEstadísticas agrupadas por género usando NATIVE QUERY con GROUP BY"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Popular Books",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8090/api/popular?limit=5",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8090",
+							"path": ["api", "popular"],
+							"query": [
+								{
+									"key": "limit",
+									"value": "5",
+									"description": "Cantidad de libros más populares"
+								}
+							]
+						},
+						"description": "Gateway redirige a: /ms-book/v1/api/popular\nLibros más prestados usando NATIVE QUERY"
+					},
+					"response": []
+				}
+			],
+			"description": "Filtros y análisis de datos"
+		},
+		{
+			"name": "Books - Business Operations",
+			"item": [
+				{
+					"name": "Borrow Book",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8090/api/books/1/borrow",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8090",
+							"path": ["api", "books", "1", "borrow"]
+						},
+						"description": "Gateway redirige a: /ms-book/v1/api/books/1/borrow\nPrestamo de libro (decrementa availableCopies)"
+					},
+					"response": []
+				},
+				{
+					"name": "Return Book",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8090/api/books/1/return",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8090",
+							"path": ["api", "books", "1", "return"]
+						},
+						"description": "Gateway redirige a: /ms-book/v1/api/books/1/return\nDevolución de libro (incrementa availableCopies)"
+					},
+					"response": []
+				}
+			],
+			"description": "Operaciones de negocio para préstamo y devolución"
+		},
+		{
+			"name": "Direct MS-Book Access (Dev Only)",
+			"item": [
+				{
+					"name": "Direct - Get All Books",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8082/ms-book/v1/api/books?page=0&size=10",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8082",
+							"path": ["ms-book", "v1", "api", "books"],
+							"query": [
+								{
+									"key": "page",
+									"value": "0"
+								},
+								{
+									"key": "size",
+									"value": "10"
+								}
+							]
+						},
+						"description": "Acceso DIRECTO al microservicio MS-Book (solo para desarrollo).\nEn producción, usar siempre el Gateway."
+					},
+					"response": []
+				},
+				{
+					"name": "Direct - Get Book by ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8082/ms-book/v1/api/books/1",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8082",
+							"path": ["ms-book", "v1", "api", "books", "1"]
+						},
+						"description": "Acceso DIRECTO al microservicio MS-Book (solo para desarrollo)"
+					},
+					"response": []
+				},
+				{
+					"name": "Direct - Create Book",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"title\": \"Libro Directo al Microservicio\",\n  \"author\": \"Autor Prueba\",\n  \"isbn\": \"9781234567890\",\n  \"publicationDate\": \"2025-01-01\",\n  \"pageCount\": 300,\n  \"genre\": \"Prueba\",\n  \"description\": \"Creado directamente en MS-Book\",\n  \"availableCopies\": 5,\n  \"totalCopies\": 5\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8082/ms-book/v1/api/books",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8082",
+							"path": ["ms-book", "v1", "api", "books"]
+						},
+						"description": "Acceso DIRECTO al microservicio MS-Book (solo para desarrollo)"
+					},
+					"response": []
+				},
+				{
+					"name": "Direct - Search by Title",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8082/ms-book/v1/api/search/title?query=señor",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8082",
+							"path": ["ms-book", "v1", "api", "search", "title"],
+							"query": [
+								{
+									"key": "query",
+									"value": "señor"
+								}
+							]
+						},
+						"description": "Acceso DIRECTO al microservicio MS-Book (solo para desarrollo)"
+					},
+					"response": []
+				}
+			],
+			"description": "⚠️ Acceso directo a microservicios - SOLO PARA DESARROLLO\nEn producción siempre usar el Gateway (puerto 8090)"
+		},
+		{
+			"name": "Keycloak - Authentication",
+			"item": [
+				{
+					"name": "Get Access Token (Manual)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Guardar token en variable de colección automáticamente",
+									"const jsonData = pm.response.json();",
+									"",
+									"if (jsonData.access_token) {",
+									"    pm.collectionVariables.set('access_token', jsonData.access_token);",
+									"    ",
+									"    const expiresIn = jsonData.expires_in || 300;",
+									"    const expiryTime = Date.now() + ((expiresIn - 30) * 1000);",
+									"    pm.collectionVariables.set('token_expiry', expiryTime);",
+									"    ",
+									"    console.log('✅ Token guardado en variables de colección');",
+									"    console.log('Expira en:', expiresIn, 'segundos');",
+									"    ",
+									"    if (jsonData.refresh_token) {",
+									"        pm.collectionVariables.set('refresh_token', jsonData.refresh_token);",
+									"    }",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/x-www-form-urlencoded",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "grant_type",
+									"value": "password",
+									"type": "text"
+								},
+								{
+									"key": "client_id",
+									"value": "{{keycloak_client_id}}",
+									"type": "text"
+								},
+								{
+									"key": "username",
+									"value": "{{keycloak_username}}",
+									"type": "text"
+								},
+								{
+									"key": "password",
+									"value": "{{keycloak_password}}",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{keycloak_url}}/realms/{{keycloak_realm}}/protocol/openid-connect/token",
+							"host": ["{{keycloak_url}}"],
+							"path": [
+								"realms",
+								"{{keycloak_realm}}",
+								"protocol",
+								"openid-connect",
+								"token"
+							]
+						},
+						"description": "Obtiene manualmente un token JWT de Keycloak.\n\n⚠️ NOTA: No es necesario ejecutar esta petición manualmente.\nLa colección obtiene el token automáticamente antes de cada petición.\n\nUsa esto solo para:\n- Ver el contenido del token\n- Depurar problemas de autenticación\n- Probar diferentes usuarios"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Access Token (Confidential Client)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Guardar token para clientes CONFIDENCIALES (requiere client_secret)",
+									"const jsonData = pm.response.json();",
+									"if (jsonData.access_token) {",
+									"    pm.collectionVariables.set('access_token', jsonData.access_token);",
+									"    const expiresIn = jsonData.expires_in || 300;",
+									"    const expiryTime = Date.now() + ((expiresIn - 30) * 1000);",
+									"    pm.collectionVariables.set('token_expiry', expiryTime);",
+									"    console.log('✅ Token (confidential client) guardado');",
+									"    if (jsonData.refresh_token) { pm.collectionVariables.set('refresh_token', jsonData.refresh_token); }",
+									"} else {",
+									"    console.error('❌ No se obtuvo token para cliente confidencial');",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {"type": "noauth"},
+						"method": "POST",
+						"header": [
+							{"key": "Content-Type", "value": "application/x-www-form-urlencoded", "type": "text"}
+						],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{"key": "grant_type", "value": "password", "type": "text"},
+								{"key": "client_id", "value": "{{keycloak_client_id}}", "type": "text"},
+								{"key": "client_secret", "value": "{{keycloak_client_secret}}", "type": "text"},
+								{"key": "username", "value": "{{keycloak_username}}", "type": "text"},
+								{"key": "password", "value": "{{keycloak_password}}", "type": "text"}
+							]
+						},
+						"url": {
+							"raw": "{{keycloak_url}}/realms/{{keycloak_realm}}/protocol/openid-connect/token",
+							"host": ["{{keycloak_url}}"],
+							"path": ["realms", "{{keycloak_realm}}", "protocol", "openid-connect", "token"]
+						},
+						"description": "Usar SOLO si el cliente en Keycloak es CONFIDENTIAL y requiere client_secret. Si el cliente es PUBLIC, usar 'Get Access Token (Manual)'."
+					},
+					"response": []
+				},
+				{
+					"name": "Refresh Token",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const jsonData = pm.response.json();",
+									"",
+									"if (jsonData.access_token) {",
+									"    pm.collectionVariables.set('access_token', jsonData.access_token);",
+									"    ",
+									"    const expiresIn = jsonData.expires_in || 300;",
+									"    const expiryTime = Date.now() + ((expiresIn - 30) * 1000);",
+									"    pm.collectionVariables.set('token_expiry', expiryTime);",
+									"    ",
+									"    console.log('✅ Token renovado exitosamente');",
+									"    ",
+									"    if (jsonData.refresh_token) {",
+									"        pm.collectionVariables.set('refresh_token', jsonData.refresh_token);",
+									"    }",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/x-www-form-urlencoded",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "grant_type",
+									"value": "refresh_token",
+									"type": "text"
+								},
+								{
+									"key": "client_id",
+									"value": "{{keycloak_client_id}}",
+									"type": "text"
+								},
+								{
+									"key": "refresh_token",
+									"value": "{{refresh_token}}",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{keycloak_url}}/realms/{{keycloak_realm}}/protocol/openid-connect/token",
+							"host": ["{{keycloak_url}}"],
+							"path": [
+								"realms",
+								"{{keycloak_realm}}",
+								"protocol",
+								"openid-connect",
+								"token"
+							]
+						},
+						"description": "Renueva el access token usando el refresh token.\n\nUso opcional - la colección maneja la renovación automáticamente."
+					},
+					"response": []
+				},
+				{
+					"name": "Logout",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/x-www-form-urlencoded",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "client_id",
+									"value": "{{keycloak_client_id}}",
+									"type": "text"
+								},
+								{
+									"key": "refresh_token",
+									"value": "{{refresh_token}}",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{keycloak_url}}/realms/{{keycloak_realm}}/protocol/openid-connect/logout",
+							"host": ["{{keycloak_url}}"],
+							"path": [
+								"realms",
+								"{{keycloak_realm}}",
+								"protocol",
+								"openid-connect",
+								"logout"
+							]
+						},
+						"description": "Invalida el token actual en Keycloak (logout del usuario)"
+					},
+					"response": []
+				},
+				{
+					"name": "Test Endpoint Protected (Should Fail without Token)",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8090/api/books",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8090",
+							"path": ["api", "books"]
+						},
+						"description": "Prueba endpoint sin token.\n\nDebe devolver:\n- 401 Unauthorized (token ausente o inválido)\n- 403 Forbidden (sin permisos)\n\nEsto demuestra que los endpoints están protegidos."
+					},
+					"response": []
+				}
+			],
+			"description": "Gestión de autenticación JWT con Keycloak"
+		}
+	],
+	"variable": [
+		{
+			"key": "gateway_url",
+			"value": "http://localhost:8090",
+			"type": "string"
+		},
+		{
+			"key": "ms_book_url",
+			"value": "http://localhost:8082",
+			"type": "string"
+		},
+		{
+			"key": "keycloak_url",
+			"value": "http://localhost:8180",
+			"type": "string"
+		},
+		{
+			"key": "keycloak_realm",
+			"value": "library-realm",
+			"type": "string"
+		},
+		{
+			"key": "keycloak_client_id",
+			"value": "library-client",
+			"type": "string"
+		},
+		{
+			"key": "keycloak_client_secret",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "config_server_url",
+			"value": "http://localhost:8888",
+			"type": "string"
+		},
+		{
+			"key": "keycloak_username",
+			"value": "admin",
+			"type": "string"
+		},
+		{
+			"key": "keycloak_password",
+			"value": "admin",
+			"type": "string"
+		},
+		{
+			"key": "access_token",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "refresh_token",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "token_expiry",
+			"value": "0",
+			"type": "string"
+		}
+	]
+}

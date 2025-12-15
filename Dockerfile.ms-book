@@ -1,0 +1,42 @@
+# Multi-stage build for ms-book with dependencies
+FROM maven:3.9.6-eclipse-temurin-21 AS dependency-builder
+
+WORKDIR /workspace
+
+# First build dto-book dependency
+COPY dto-book/ dto-book/
+WORKDIR /workspace/dto-book
+RUN mvn clean install -DskipTests
+
+# Then build util dependency
+WORKDIR /workspace
+COPY util/ util/
+WORKDIR /workspace/util
+RUN mvn clean install -DskipTests
+
+# Finally build ms-book
+WORKDIR /workspace
+COPY ms-book/ ms-book/
+WORKDIR /workspace/ms-book
+RUN mvn clean package -DskipTests
+
+# Stage 2: Run the application
+FROM eclipse-temurin:21-jre-alpine
+
+# Install curl for health checks
+RUN apk add --no-cache curl
+
+WORKDIR /app
+
+# Copy JAR from build stage
+COPY --from=dependency-builder /workspace/ms-book/target/*.jar app.jar
+
+# Expose port
+EXPOSE 8001
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+  CMD curl -f http://localhost:8001/actuator/health || exit 1
+
+# Run application
+ENTRYPOINT ["java", "-jar", "app.jar"]

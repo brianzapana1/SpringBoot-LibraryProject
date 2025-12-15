@@ -1,0 +1,73 @@
+server:
+  port: 8082
+
+# Configuración de base de datos H2
+spring:
+  datasource:
+    url: jdbc:h2:mem:bookdb
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: password
+  jpa:
+    database-platform: org.hibernate.dialect.H2Dialect
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+
+# Configuración de logging
+logging:
+  level:
+    bo.edu.ucb.microservices: DEBUG
+    org.springframework.cloud.config: DEBUG
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql: TRACE
+
+# Configuración de gestión y monitoreo
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  endpoint:
+    health:
+      show-details: always
+    info:
+      enabled: true
+  info:
+    env:
+      enabled: true
+
+# Variables de configuración
+app:
+  eureka-server: localhost
+  name: "Microservicio de Libros"
+  version: "1.0.0"
+  description: "Servicio para gestión de libros y catálogo"
+
+# Configuración de Eureka
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: http://${app.eureka-server}:8761/eureka/
+    register-with-eureka: true
+    fetch-registry: true
+    initial-instance-info-replication-interval-seconds: 5
+    instance-info-replication-interval-seconds: 5
+  instance:
+    prefer-ip-address: true
+    lease-renewal-interval-in-seconds: 5
+    lease-expiration-duration-in-seconds: 5
+    instance-id: ${spring.application.name}:${spring.application.instance-id:${random.value}}
+
+# Configuración específica de ms-book
+book:
+  service:
+    timeout: 30000
+    max-connections: 100
