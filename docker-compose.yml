@@ -1,0 +1,116 @@
+services:
+  eureka:
+    build:
+      context: ./ms-eureka-server
+    container_name: eureka
+    ports:
+      - "8762:8761"
+    networks:
+      - ms-net
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8761 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  config-server:
+    build:
+      context: ./ms-config-server
+    container_name: config-server
+    ports:
+      - "8888:8888"
+    volumes:
+      - ./config-repo:/app/config-repo:rw
+    environment:
+      - JAVA_OPTS=-Deureka.client.service-url.defaultZone=http://eureka:8761/eureka/
+      - ENCRYPT_KEY=mi-clave-secreta-12345-para-encriptacion-spring-cloud-config
+    depends_on:
+      eureka:
+        condition: service_healthy
+    networks:
+      - ms-net
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8888/actuator/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  reservation:
+    build:
+      context: .
+      dockerfile: ms-reservation/Dockerfile
+    container_name: reservation
+    environment:
+      - JAVA_OPTS=-Deureka.client.service-url.defaultZone=http://eureka:8761/eureka/ -Dspring.datasource.url=jdbc:mysql://host.docker.internal:3307/library_reservation?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC -Dspring.config.import=optional:configserver:http://config-server:8888
+    ports:
+      - "8086:8084"
+    depends_on:
+      eureka:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+    networks:
+      - ms-net
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8084/actuator/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 60s
+
+  gateway:
+    build:
+      context: ./ms-gateway
+    container_name: gateway
+    environment:
+      - JAVA_OPTS=-Deureka.client.service-url.defaultZone=http://eureka:8761/eureka/ -Dspring.config.import=optional:configserver:http://config-server:8888
+    ports:
+      - "8088:8080"
+    depends_on:
+      eureka:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+      reservation:
+        condition: service_started
+    networks:
+      - ms-net
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/actuator/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 60s
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:25.0
+    container_name: keycloak
+    command: start-dev
+    environment:
+      - KEYCLOAK_ADMIN=admin
+      - KEYCLOAK_ADMIN_PASSWORD=admin
+      - KC_HTTP_ENABLED=true
+      - KC_HOSTNAME_STRICT=false
+      - KC_HOSTNAME_STRICT_HTTPS=false
+      - KC_HOSTNAME_ADMIN_URL=http://localhost:8090
+    ports:
+      - "8090:8080"
+    volumes:
+      - keycloak_data:/opt/keycloak/data
+    networks:
+      - ms-net
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/health/ready || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 60s
+
+networks:
+  ms-net:
+    driver: bridge
+
+volumes:
+  keycloak_data:

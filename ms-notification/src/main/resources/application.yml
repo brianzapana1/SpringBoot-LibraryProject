@@ -1,0 +1,13 @@
+spring:
+  application:
+    name: ms-notification
+  config:
+    import: classpath:application-openapi.yml
+
+server:
+  port: 8081
+
+logging:
+  level:
+    root: INFO
+    bo.edu.ucb.microservices: DEBUG

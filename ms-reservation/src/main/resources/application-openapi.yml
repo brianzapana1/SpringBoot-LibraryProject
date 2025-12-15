@@ -1,0 +1,22 @@
+springdoc:
+  swagger-ui:
+    path: /openapi/swagger-ui.html
+  api-docs:
+    path: /openapi/v3/api-docs
+  packagesToScan: com.library.reservation.controller
+  pathsToMatch: /**
+
+api:
+  common:
+    version: 1.0.0
+    title: API Reservation
+    description: Servicio de reservas de biblioteca
+    termsOfService: https://www.miempresa.com/terminos
+    license: Licencia MIT
+    licenseUrl: https://opensource.org/licenses/MIT
+    externalDocDesc: Documentación en Wiki
+    externalDocUrl: https://www.miempresa.com/wiki
+    contact:
+      name: Soporte Biblioteca
+      url: https://www.miempresa.com/contacto
+      email: soporte@miempresa.com

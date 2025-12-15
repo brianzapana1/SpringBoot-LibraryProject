@@ -1,0 +1,851 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Reservas - Biblioteca</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+
+        .header .subtitle {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+
+        .status-badge.success {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        .status-badge.info {
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+
+        .login-section {
+            text-align: center;
+            padding: 40px 20px;
+        }
+
+        .login-section p {
+            color: #666;
+            margin-bottom: 30px;
+            line-height: 1.6;
+        }
+
+        .btn {
+            padding: 14px 32px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-block;
+            text-decoration: none;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+        }
+
+        .btn-success {
+            background: #4CAF50;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #45a049;
+            transform: translateY(-2px);
+        }
+
+        .btn-info {
+            background: #2196F3;
+            color: white;
+        }
+
+        .btn-info:hover {
+            background: #0b7dda;
+            transform: translateY(-2px);
+        }
+
+        .btn-warning {
+            background: #FF9800;
+            color: white;
+        }
+
+        .btn-warning:hover {
+            background: #F57C00;
+            transform: translateY(-2px);
+        }
+
+        .btn-danger {
+            background: #f44336;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #da190b;
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: #757575;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #616161;
+            transform: translateY(-2px);
+        }
+
+        .btn-large {
+            padding: 18px 40px;
+            font-size: 18px;
+            width: 100%;
+            margin-bottom: 15px;
+        }
+
+        .endpoints-menu {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .form-container {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 20px;
+            border: 2px solid #e9ecef;
+            display: none;
+        }
+
+        .form-container.active {
+            display: block;
+        }
+
+        .form-container h3 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 6px;
+            color: #555;
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px 14px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .result-box {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 20px;
+            border: 2px solid #e9ecef;
+            min-height: 100px;
+            display: none;
+        }
+
+        .result-box.active {
+            display: block;
+        }
+
+        .result-box.success {
+            background: #e8f5e9;
+            border-color: #4CAF50;
+        }
+
+        .result-box.error {
+            background: #ffebee;
+            border-color: #f44336;
+        }
+
+        .result-box.info {
+            background: #e3f2fd;
+            border-color: #2196F3;
+        }
+
+        .result-content {
+            font-size: 15px;
+            line-height: 1.6;
+            color: #333;
+        }
+
+        .result-box.success .result-content {
+            color: #2e7d32;
+        }
+
+        .result-box.error .result-content {
+            color: #c62828;
+        }
+
+        .result-item {
+            padding: 10px;
+            background: white;
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+
+        .result-item strong {
+            color: #667eea;
+            display: inline-block;
+            min-width: 150px;
+        }
+
+        .logout-section {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 30px;
+            border-top: 2px solid #e9ecef;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .back-btn {
+            background: #757575;
+            color: white;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-bottom: 15px;
+        }
+
+        .back-btn:hover {
+            background: #616161;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📚 Sistema de Reservas</h1>
+            <div class="subtitle">Biblioteca - Gestión de Reservas</div>
+        </div>
+
+        <div class="content">
+            <!-- Sección de Login -->
+            <div id="loginSection">
+                <div class="login-section">
+                    <div class="status-badge info">
+                        <span id="status">No autenticado</span>
+                    </div>
+                    <p>
+                        Para usar el sistema, necesitas iniciar sesión con tus credenciales de Keycloak.
+                        <br>Después podrás gestionar las reservas de libros.
+                    </p>
+                    <button class="btn btn-primary btn-large" onclick="login()">
+                        🔑 Iniciar Sesión
+                    </button>
+                </div>
+            </div>
+
+            <!-- Sección Autenticada -->
+            <div id="authenticatedSection" class="hidden">
+                <div class="status-badge success">
+                    ✅ Sesión activa - Puedes gestionar reservas
+                </div>
+
+                <!-- Menú de Endpoints -->
+                <div id="endpointsMenu" class="endpoints-menu">
+                    <button class="btn btn-info btn-large" onclick="showForm('get')">
+                        👁️ Ver Reserva
+                    </button>
+                    <button class="btn btn-success btn-large" onclick="showForm('create')">
+                        ➕ Crear Reserva
+                    </button>
+                    <button class="btn btn-warning btn-large" onclick="showForm('update')">
+                        ✏️ Actualizar Reserva
+                    </button>
+                    <button class="btn btn-danger btn-large" onclick="showForm('delete')">
+                        🗑️ Eliminar Reserva
+                    </button>
+                </div>
+
+                <!-- Formulario: Ver Reserva -->
+                <div id="formGet" class="form-container">
+                    <button class="back-btn" onclick="showMenu()">← Volver al menú</button>
+                    <h3>👁️ Ver Reserva</h3>
+                    <div class="form-group">
+                        <label>ID de Reserva:</label>
+                        <input type="number" id="reservationId" placeholder="Ingresa el ID de la reserva" value="1">
+                    </div>
+                    <div class="form-actions">
+                        <button class="btn btn-info" onclick="getReservation()" style="flex: 1;">
+                            Buscar Reserva
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Formulario: Crear Reserva -->
+                <div id="formCreate" class="form-container">
+                    <button class="back-btn" onclick="showMenu()">← Volver al menú</button>
+                    <h3>➕ Crear Nueva Reserva</h3>
+                    <div class="form-group">
+                        <label>ID del Libro:</label>
+                        <input type="number" id="bookId" placeholder="Ej: 1" value="1">
+                    </div>
+                    <div class="form-group">
+                        <label>ID del Usuario:</label>
+                        <input type="number" id="userId" placeholder="Ej: 1" value="1">
+                    </div>
+                    <div class="form-group">
+                        <label>Fecha de Reserva:</label>
+                        <input type="date" id="reservationDate" value="2025-12-08">
+                    </div>
+                    <div class="form-group">
+                        <label>Fecha de Devolución:</label>
+                        <input type="date" id="returnDate" value="2025-12-15">
+                    </div>
+                    <div class="form-actions">
+                        <button class="btn btn-success" onclick="createReservation()" style="flex: 1;">
+                            Crear Reserva
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Formulario: Actualizar Reserva -->
+                <div id="formUpdate" class="form-container">
+                    <button class="back-btn" onclick="showMenu()">← Volver al menú</button>
+                    <h3>✏️ Actualizar Reserva</h3>
+                    
+                    <!-- Paso 1: Buscar Reserva -->
+                    <div id="updateSearchStep">
+                        <div class="form-group">
+                            <label>ID de Reserva a Actualizar:</label>
+                            <input type="number" id="updateReservationId" placeholder="Ingresa el ID de la reserva" value="1">
+                        </div>
+                        <div class="form-actions">
+                            <button class="btn btn-info" onclick="loadReservationForUpdate()" style="flex: 1;">
+                                🔍 Buscar Reserva
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Paso 2: Formulario de Actualización (oculto inicialmente) -->
+                    <div id="updateFormStep" style="display: none;">
+                        <div style="background: #e3f2fd; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                            <strong>📋 Datos actuales de la reserva:</strong>
+                        </div>
+                        <div class="form-group">
+                            <label>ID del Libro:</label>
+                            <input type="number" id="updateBookId" placeholder="Ej: 1">
+                        </div>
+                        <div class="form-group">
+                            <label>ID del Usuario:</label>
+                            <input type="number" id="updateUserId" placeholder="Ej: 1">
+                        </div>
+                        <div class="form-group">
+                            <label>Fecha de Reserva:</label>
+                            <input type="date" id="updateStartDate">
+                        </div>
+                        <div class="form-group">
+                            <label>Fecha de Devolución:</label>
+                            <input type="date" id="updateEndDate">
+                        </div>
+                        <div class="form-actions">
+                            <button class="btn btn-secondary" onclick="resetUpdateForm()" style="flex: 1;">
+                                🔄 Buscar Otra Reserva
+                            </button>
+                            <button class="btn btn-warning" onclick="updateReservation()" style="flex: 1;">
+                                💾 Guardar Cambios
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Formulario: Eliminar Reserva -->
+                <div id="formDelete" class="form-container">
+                    <button class="back-btn" onclick="showMenu()">← Volver al menú</button>
+                    <h3>🗑️ Eliminar Reserva</h3>
+                    <div class="form-group">
+                        <label>ID de Reserva a Eliminar:</label>
+                        <input type="number" id="deleteReservationId" placeholder="Ingresa el ID de la reserva" value="1">
+                    </div>
+                    <div class="form-actions">
+                        <button class="btn btn-danger" onclick="deleteReservation()" style="flex: 1;">
+                            Eliminar Reserva
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Resultados -->
+                <div id="result" class="result-box">
+                    <div class="result-content" id="resultContent"></div>
+                </div>
+
+                <!-- Logout -->
+                <div class="logout-section">
+                    <button class="btn btn-secondary" onclick="logout()">
+                        Cerrar Sesión
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Configuración
+        const KEYCLOAK_URL = 'http://localhost:8090';
+        const REALM = 'library-realm';
+        const CLIENT_ID = 'web-app';
+        const REDIRECT_URI = window.location.href.split('?')[0];
+        const GATEWAY_URL = 'http://localhost:8088';
+
+        let accessToken = null;
+
+        // Cargar página
+        window.onload = function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const code = urlParams.get('code');
+            
+            if (urlParams.has('logout') || window.location.search.includes('logout')) {
+                accessToken = null;
+                localStorage.removeItem('accessToken');
+                window.history.replaceState({}, document.title, window.location.pathname);
+            }
+            
+            if (code) {
+                showResult('🔄 Obteniendo token de acceso...', 'info');
+                exchangeCodeForToken(code);
+            } else {
+                const savedToken = localStorage.getItem('accessToken');
+                if (savedToken) {
+                    accessToken = savedToken;
+                    showAuthenticatedSection();
+                    showResult('✅ Sesión restaurada correctamente.', 'success');
+                }
+            }
+        };
+
+        function login() {
+            accessToken = null;
+            localStorage.removeItem('accessToken');
+            
+            const authUrl = `${KEYCLOAK_URL}/realms/${REALM}/protocol/openid-connect/auth` +
+                `?client_id=${CLIENT_ID}` +
+                `&redirect_uri=${encodeURIComponent(REDIRECT_URI)}` +
+                `&response_type=code` +
+                `&scope=openid profile email` +
+                `&prompt=login` +
+                `&state=login`;
+            
+            window.location.href = authUrl;
+        }
+
+        async function exchangeCodeForToken(code) {
+            try {
+                const tokenUrl = `${KEYCLOAK_URL}/realms/${REALM}/protocol/openid-connect/token`;
+                
+                const params = new URLSearchParams();
+                params.append('grant_type', 'authorization_code');
+                params.append('client_id', CLIENT_ID);
+                params.append('code', code);
+                params.append('redirect_uri', REDIRECT_URI);
+
+                const response = await fetch(tokenUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: params
+                });
+
+                if (!response.ok) {
+                    throw new Error('Error al obtener token');
+                }
+
+                const data = await response.json();
+                accessToken = data.access_token;
+                localStorage.setItem('accessToken', accessToken);
+                
+                window.history.replaceState({}, document.title, window.location.pathname);
+                
+                showAuthenticatedSection();
+                showResult('✅ ¡Autenticación exitosa! Selecciona una opción del menú para comenzar.', 'success');
+            } catch (error) {
+                showResult('❌ Error: ' + error.message, 'error');
+            }
+        }
+
+        function showAuthenticatedSection() {
+            document.getElementById('loginSection').classList.add('hidden');
+            document.getElementById('authenticatedSection').classList.remove('hidden');
+            document.getElementById('status').textContent = 'Autenticado';
+        }
+
+        function showMenu() {
+            document.getElementById('endpointsMenu').style.display = 'grid';
+            document.querySelectorAll('.form-container').forEach(form => {
+                form.classList.remove('active');
+            });
+            document.getElementById('result').classList.remove('active');
+        }
+
+        function showForm(formType) {
+            document.getElementById('endpointsMenu').style.display = 'none';
+            document.querySelectorAll('.form-container').forEach(form => {
+                form.classList.remove('active');
+            });
+            document.getElementById('result').classList.remove('active');
+            
+            if (formType === 'get') {
+                document.getElementById('formGet').classList.add('active');
+            } else if (formType === 'create') {
+                document.getElementById('formCreate').classList.add('active');
+            } else if (formType === 'update') {
+                document.getElementById('formUpdate').classList.add('active');
+                // Resetear formulario de actualización
+                resetUpdateForm();
+            } else if (formType === 'delete') {
+                document.getElementById('formDelete').classList.add('active');
+            }
+        }
+
+        async function getReservation() {
+            const id = document.getElementById('reservationId').value;
+            if (!id) {
+                showResult('❌ Por favor, ingresa un ID de reserva.', 'error');
+                return;
+            }
+            await makeRequest('GET', `${GATEWAY_URL}/reservation/${id}`);
+        }
+
+        async function createReservation() {
+            const reservation = {
+                bookId: parseInt(document.getElementById('bookId').value),
+                userId: parseInt(document.getElementById('userId').value),
+                startDate: document.getElementById('reservationDate').value,
+                endDate: document.getElementById('returnDate').value
+            };
+            
+            if (!reservation.bookId || !reservation.userId || !reservation.startDate || !reservation.endDate) {
+                showResult('❌ Por favor, completa todos los campos.', 'error');
+                return;
+            }
+            
+            await makeRequest('POST', `${GATEWAY_URL}/reservation`, reservation);
+        }
+
+        let currentUpdateId = null;
+
+        async function loadReservationForUpdate() {
+            const id = document.getElementById('updateReservationId').value;
+            if (!id) {
+                showResult('❌ Por favor, ingresa un ID de reserva.', 'error');
+                return;
+            }
+
+            currentUpdateId = id;
+
+            try {
+                if (!accessToken) {
+                    showResult('❌ No hay sesión activa. Por favor, inicia sesión primero.', 'error');
+                    return;
+                }
+
+                showResult('🔄 Buscando reserva...', 'info');
+
+                const response = await fetch(`${GATEWAY_URL}/reservation/${id}`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${accessToken}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                const responseText = await response.text();
+                let data;
+                try {
+                    data = responseText ? JSON.parse(responseText) : null;
+                } catch (e) {
+                    data = responseText || 'Sin contenido';
+                }
+
+                if (response.ok && data) {
+                    // Llenar el formulario con los datos obtenidos
+                    document.getElementById('updateBookId').value = data.bookId || '';
+                    document.getElementById('updateUserId').value = data.userId || '';
+                    document.getElementById('updateStartDate').value = data.startDate || '';
+                    document.getElementById('updateEndDate').value = data.endDate || '';
+
+                    // Ocultar paso de búsqueda y mostrar formulario
+                    document.getElementById('updateSearchStep').style.display = 'none';
+                    document.getElementById('updateFormStep').style.display = 'block';
+
+                    // Mostrar datos encontrados
+                    showResultFormatted(data, 'success', '✅ Reserva encontrada. Puedes modificar los campos:');
+                } else {
+                    if (data && typeof data === 'object') {
+                        let errorMsg = '❌ Error al buscar la reserva:\n\n';
+                        if (data.message) {
+                            errorMsg += data.message;
+                        } else if (data.error) {
+                            errorMsg += data.error;
+                        } else {
+                            errorMsg += JSON.stringify(data, null, 2);
+                        }
+                        showResult(errorMsg, 'error');
+                    } else {
+                        showResult(`❌ Error: ${data || 'Reserva no encontrada'}`, 'error');
+                    }
+                }
+            } catch (error) {
+                showResult(`❌ Error de conexión: ${error.message}`, 'error');
+            }
+        }
+
+        function resetUpdateForm() {
+            document.getElementById('updateSearchStep').style.display = 'block';
+            document.getElementById('updateFormStep').style.display = 'none';
+            document.getElementById('updateReservationId').value = '';
+            document.getElementById('updateBookId').value = '';
+            document.getElementById('updateUserId').value = '';
+            document.getElementById('updateStartDate').value = '';
+            document.getElementById('updateEndDate').value = '';
+            currentUpdateId = null;
+            document.getElementById('result').classList.remove('active');
+        }
+
+        async function updateReservation() {
+            if (!currentUpdateId) {
+                showResult('❌ Por favor, primero busca una reserva.', 'error');
+                return;
+            }
+            
+            const reservation = {
+                bookId: parseInt(document.getElementById('updateBookId').value),
+                userId: parseInt(document.getElementById('updateUserId').value),
+                startDate: document.getElementById('updateStartDate').value,
+                endDate: document.getElementById('updateEndDate').value
+            };
+            
+            if (!reservation.bookId || !reservation.userId || !reservation.startDate || !reservation.endDate) {
+                showResult('❌ Por favor, completa todos los campos.', 'error');
+                return;
+            }
+            
+            await makeRequest('PUT', `${GATEWAY_URL}/reservation/${currentUpdateId}`, reservation);
+        }
+
+        async function deleteReservation() {
+            const id = document.getElementById('deleteReservationId').value;
+            if (!id) {
+                showResult('❌ Por favor, ingresa un ID de reserva.', 'error');
+                return;
+            }
+            
+            if (!confirm(`¿Estás seguro de que deseas eliminar la reserva #${id}?`)) {
+                return;
+            }
+            
+            await makeRequest('DELETE', `${GATEWAY_URL}/reservation/${id}`);
+        }
+
+        async function makeRequest(method, url, body = null) {
+            if (!accessToken) {
+                showResult('❌ No hay sesión activa. Por favor, inicia sesión primero.', 'error');
+                return;
+            }
+
+            try {
+                const options = {
+                    method: method,
+                    headers: {
+                        'Authorization': `Bearer ${accessToken}`,
+                        'Content-Type': 'application/json'
+                    }
+                };
+
+                if (body && (method === 'POST' || method === 'PUT')) {
+                    options.body = JSON.stringify(body);
+                }
+
+                showResult('🔄 Procesando solicitud...', 'info');
+
+                const response = await fetch(url, options);
+                const responseText = await response.text();
+                
+                let data;
+                try {
+                    data = responseText ? JSON.parse(responseText) : null;
+                } catch (e) {
+                    data = responseText || 'Sin contenido';
+                }
+
+                document.getElementById('result').classList.add('active');
+                
+                if (response.ok) {
+                    if (method === 'GET' && data) {
+                        // Formato amigable para GET
+                        showResultFormatted(data, 'success', 'Reserva encontrada:');
+                    } else if (method === 'POST' && data) {
+                        showResultFormatted(data, 'success', '✅ Reserva creada exitosamente:');
+                    } else if (method === 'PUT' && data) {
+                        showResultFormatted(data, 'success', '✅ Reserva actualizada exitosamente:');
+                    } else if (method === 'DELETE') {
+                        showResult('✅ Reserva eliminada exitosamente.', 'success');
+                    } else {
+                        showResult('✅ Operación completada exitosamente.', 'success');
+                    }
+                } else {
+                    // Formato amigable para errores
+                    if (data && typeof data === 'object') {
+                        let errorMsg = '❌ Error en la operación:\n\n';
+                        if (data.message) {
+                            errorMsg += data.message;
+                        } else if (data.error) {
+                            errorMsg += data.error;
+                        } else {
+                            errorMsg += JSON.stringify(data, null, 2);
+                        }
+                        showResult(errorMsg, 'error');
+                    } else {
+                        showResult(`❌ Error: ${data || 'Error desconocido'}`, 'error');
+                    }
+                }
+            } catch (error) {
+                showResult(`❌ Error de conexión: ${error.message}\n\nVerifica que el Gateway y ms-reservation estén corriendo.`, 'error');
+            }
+        }
+
+        function showResultFormatted(data, type, title) {
+            let html = `<strong>${title}</strong><br><br>`;
+            
+            if (data.reservationId) {
+                html += `<div class="result-item"><strong>ID de Reserva:</strong> ${data.reservationId}</div>`;
+            }
+            if (data.bookId !== undefined) {
+                html += `<div class="result-item"><strong>ID del Libro:</strong> ${data.bookId}</div>`;
+            }
+            if (data.userId !== undefined) {
+                html += `<div class="result-item"><strong>ID del Usuario:</strong> ${data.userId}</div>`;
+            }
+            if (data.startDate) {
+                html += `<div class="result-item"><strong>Fecha de Reserva:</strong> ${formatDate(data.startDate)}</div>`;
+            }
+            if (data.endDate) {
+                html += `<div class="result-item"><strong>Fecha de Devolución:</strong> ${formatDate(data.endDate)}</div>`;
+            }
+            
+            document.getElementById('result').className = 'result-box active ' + type;
+            document.getElementById('resultContent').innerHTML = html;
+        }
+
+        function showResult(message, type = 'info') {
+            document.getElementById('result').className = 'result-box active ' + type;
+            document.getElementById('resultContent').innerHTML = message.replace(/\n/g, '<br>');
+        }
+
+        function formatDate(dateString) {
+            if (!dateString) return 'N/A';
+            const date = new Date(dateString);
+            return date.toLocaleDateString('es-ES', { 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+            });
+        }
+
+        function logout() {
+            accessToken = null;
+            localStorage.removeItem('accessToken');
+            
+            document.getElementById('loginSection').classList.remove('hidden');
+            document.getElementById('authenticatedSection').classList.add('hidden');
+            document.getElementById('status').textContent = 'No autenticado';
+            
+            window.history.replaceState({}, document.title, window.location.pathname);
+            
+            const logoutUrl = `${KEYCLOAK_URL}/realms/${REALM}/protocol/openid-connect/logout`;
+            fetch(logoutUrl, { method: 'GET', mode: 'no-cors' }).catch(() => {});
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,76 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: ms-gateway
+  cloud:
+    gateway:
+      default-filters:
+        - RemoveResponseHeader=Server
+      globalcors:
+        corsConfigurations:
+          '[/**]':
+            allowedOrigins: "*"
+            allowedMethods: "GET,POST,PUT,DELETE,OPTIONS"
+            allowedHeaders: "*"
+            allowCredentials: false
+      routes:
+        # Swagger HTML por ruta relativa (DEBE IR ANTES de la ruta genérica)
+        - id: reservation-swagger-relative
+          uri: lb://MS-RESERVATION
+          predicates:
+            - Path=/reservation/openapi/**
+          filters:
+            - StripPrefix=1
+
+        # CRUD Reservation via Gateway: /reservation/** -> ms-reservation /v1/reservation/**
+        - id: reservation-crud
+          uri: lb://MS-RESERVATION
+          predicates:
+            - Path=/reservation/**
+          filters:
+            # Reescribe /reservation + cualquier sufijo opcional a /v1/reservation + mismo sufijo
+            - RewritePath=/reservation(?<segment>/?.*), /v1/reservation${segment}
+
+        # Swagger API docs y assets absolutos generados por la UI
+        - id: reservation-openapi-absolute
+          uri: lb://MS-RESERVATION
+          predicates:
+            - Path=/openapi/**
+
+        - id: reservation-swaggerui-absolute
+          uri: lb://MS-RESERVATION
+          predicates:
+            - Path=/swagger-ui/**
+
+        - id: reservation-swaggerui-webjars
+          uri: lb://MS-RESERVATION
+          predicates:
+            - Path=/webjars/**
+
+        - id: reservation-openapi-legacy
+          uri: lb://MS-RESERVATION
+          predicates:
+            - Path=/v3/api-docs/**
+
+        # Swagger UI relativo bajo /reservation/swagger-ui/**
+        - id: reservation-swaggerui-relative
+          uri: lb://MS-RESERVATION
+          predicates:
+            - Path=/reservation/swagger-ui/**
+          filters:
+            - RewritePath=/reservation(?<segment>/swagger-ui/.*), ${segment}
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+  instance:
+    prefer-ip-address: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
